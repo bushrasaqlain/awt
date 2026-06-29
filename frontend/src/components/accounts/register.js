@@ -12,13 +12,6 @@ const PAKISTAN_CITIES = [
   "Other"
 ];
 
-const TIME_SLOTS = [
-  "Morning (8am – 12pm)",
-  "Afternoon (12pm – 4pm)",
-  "Evening (4pm – 8pm)",
-  "Flexible / Any time"
-];
-
 const STEP_LABELS = ["Personal", "Contact", "Preferences", "Emergency", "Consent"];
 
 const INITIAL_FORM = {
@@ -38,7 +31,8 @@ const INITIAL_FORM = {
   city: "",
   donationLocation: "",
   availableDays: [],
-  timeSlot: "",
+  preferredTimeFrom: "",
+  preferredTimeTo: "",
   emergencyName: "",
   emergencyRelation: "",
   emergencyPhone: "",
@@ -77,16 +71,27 @@ class Field extends Component {
 /* ── Step 1: Personal Information ── */
 class StepPersonal extends Component {
   render() {
-    const { form, errors, photoPreview, onChange, onCNIC, onPhoto } = this.props;
+    const { form, errors, photoPreview, onChange, onCNIC, onPhoto, onDOB } = this.props;
+
+    // Max DOB = yesterday (no current year's today or future)
+    const today = new Date();
+    const maxDob = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())
+      .toISOString().split("T")[0];
+    // Min DOB = 65 years ago
+    const minDob = new Date(today.getFullYear() - 65, today.getMonth(), today.getDate())
+      .toISOString().split("T")[0];
+
     return (
       <div>
         <SectionTitle icon="👤" title="Personal Information" />
 
-        {/* Photo Upload */}
+        {/* Photo Upload — required */}
         <div className="d-flex align-items-center gap-3 mb-4">
-          <label className="cursor-pointer" style={{ cursor: "pointer" }}>
+          <label style={{ cursor: "pointer" }}>
             <div
-              className="rounded-circle border border-2 border-danger d-flex align-items-center justify-content-center overflow-hidden bg-danger-subtle"
+              className={`rounded-circle border border-2 d-flex align-items-center justify-content-center overflow-hidden ${
+                errors.photo ? "border-danger bg-danger-subtle" : "border-danger bg-danger-subtle"
+              }`}
               style={{ width: 90, height: 90 }}
             >
               {photoPreview
@@ -99,7 +104,12 @@ class StepPersonal extends Component {
             </div>
             <input type="file" accept="image/*" onChange={onPhoto} className="d-none" />
           </label>
-          <p className="text-muted small mb-0">Upload a recent passport-size photo<br /><em>(optional)</em></p>
+          <div>
+            <p className="text-muted small mb-1">
+              Upload a recent passport-size photo <span className="text-danger fw-bold">*</span>
+            </p>
+            {errors.photo && <div className="text-danger small">{errors.photo}</div>}
+          </div>
         </div>
 
         <div className="row g-3">
@@ -123,21 +133,25 @@ class StepPersonal extends Component {
           </div>
 
           <div className="col-md-6">
-            <Field label="Date of Birth" error={errors.dob}>
+            <Field label="Date of Birth *" error={errors.dob}>
               <input
                 type="date"
                 className={`form-control ${errors.dob ? "is-invalid" : ""}`}
-                name="dob" value={form.dob} onChange={onChange}
+                name="dob" value={form.dob}
+                onChange={onDOB}
+                min={minDob}
+                max={maxDob}
               />
             </Field>
           </div>
           <div className="col-md-6">
-            <Field label="Age (if DOB unknown)">
+            <Field label="Age (auto-calculated)">
               <input
                 type="number"
-                className="form-control"
+                className="form-control bg-light"
                 name="age" value={form.age}
-                onChange={onChange} placeholder="e.g. 28" min="18" max="65"
+                readOnly
+                placeholder="Auto from DOB"
               />
             </Field>
           </div>
@@ -185,7 +199,7 @@ class StepPersonal extends Component {
 /* ── Step 2: Contact Information ── */
 class StepContact extends Component {
   render() {
-    const { form, errors, onChange } = this.props;
+    const { form, errors, onChange, onWhatsApp } = this.props;
     return (
       <div>
         <SectionTitle icon="📞" title="Contact Information" />
@@ -195,7 +209,7 @@ class StepContact extends Component {
               <input
                 className={`form-control ${errors.whatsapp ? "is-invalid" : ""}`}
                 name="whatsapp" value={form.whatsapp}
-                onChange={onChange} placeholder="e.g. 0300-1234567"
+                onChange={onWhatsApp} placeholder="0313-5495655" maxLength={12}
               />
             </Field>
           </div>
@@ -216,8 +230,9 @@ class StepContact extends Component {
                 type="password"
                 className={`form-control ${errors.password ? "is-invalid" : ""}`}
                 name="password" value={form.password}
-                onChange={onChange} placeholder="Min. 6 characters"
+                onChange={onChange} placeholder="Min. 8 chars, A-z, 0-9, @#$..."
               />
+              <div className="form-text">Must include uppercase, lowercase, number & special character.</div>
             </Field>
           </div>
           <div className="col-md-6">
@@ -296,14 +311,35 @@ class StepPreferences extends Component {
           </div>
         </Field>
 
-        <Field label="Preferred Time Slot *" error={errors.timeSlot}>
-          <select
-            className={`form-select ${errors.timeSlot ? "is-invalid" : ""}`}
-            name="timeSlot" value={form.timeSlot} onChange={onChange}
-          >
-            <option value="">-- Select Time Slot --</option>
-            {TIME_SLOTS.map(t => <option key={t}>{t}</option>)}
-          </select>
+        {/* Custom time range picker */}
+        <Field label="Preferred Time Slot *" error={errors.preferredTimeFrom || errors.preferredTimeTo}>
+          <div className="row g-2 mt-1">
+            <div className="col-md-6">
+              <label className="form-label small text-muted mb-1">From</label>
+              <input
+                type="time"
+                className={`form-control ${errors.preferredTimeFrom ? "is-invalid" : ""}`}
+                name="preferredTimeFrom"
+                value={form.preferredTimeFrom}
+                onChange={onChange}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label small text-muted mb-1">To</label>
+              <input
+                type="time"
+                className={`form-control ${errors.preferredTimeTo ? "is-invalid" : ""}`}
+                name="preferredTimeTo"
+                value={form.preferredTimeTo}
+                onChange={onChange}
+              />
+            </div>
+          </div>
+          {form.preferredTimeFrom && form.preferredTimeTo && (
+            <div className="form-text text-success mt-1">
+              ✓ Selected: {form.preferredTimeFrom} – {form.preferredTimeTo}
+            </div>
+          )}
         </Field>
       </div>
     );
@@ -419,13 +455,15 @@ class RegisterDonor extends Component {
     };
     this.totalSteps = 5;
 
-    this.handleChange = this.handleChange.bind(this);
-    this.handlePhoto  = this.handlePhoto.bind(this);
-    this.handleCNIC   = this.handleCNIC.bind(this);
-    this.nextStep     = this.nextStep.bind(this);
-    this.prevStep     = this.prevStep.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.resetForm    = this.resetForm.bind(this);
+    this.handleChange    = this.handleChange.bind(this);
+    this.handlePhoto     = this.handlePhoto.bind(this);
+    this.handleCNIC      = this.handleCNIC.bind(this);
+    this.handleWhatsApp  = this.handleWhatsApp.bind(this);
+    this.handleDOB       = this.handleDOB.bind(this);
+    this.nextStep        = this.nextStep.bind(this);
+    this.prevStep        = this.prevStep.bind(this);
+    this.handleSubmit    = this.handleSubmit.bind(this);
+    this.resetForm       = this.resetForm.bind(this);
   }
 
   handleChange(e) {
@@ -451,11 +489,49 @@ class RegisterDonor extends Component {
     if (file) {
       this.setState(prev => ({
         form: { ...prev.form, photo: file },
-        photoPreview: URL.createObjectURL(file)
+        photoPreview: URL.createObjectURL(file),
+        errors: { ...prev.errors, photo: "" }
       }));
     }
   }
 
+  // Auto-calculate age from DOB; reject current year
+  handleDOB(e) {
+    const dob = e.target.value;
+    if (!dob) {
+      this.setState(prev => ({
+        form: { ...prev.form, dob: "", age: "" },
+        errors: { ...prev.errors, dob: "" }
+      }));
+      return;
+    }
+
+    const dobDate    = new Date(dob);
+    const today      = new Date();
+    const currentYear = today.getFullYear();
+
+    if (dobDate.getFullYear() >= currentYear) {
+      this.setState(prev => ({
+        form: { ...prev.form, dob, age: "" },
+        errors: { ...prev.errors, dob: "Date of birth cannot be in the current year or future." }
+      }));
+      return;
+    }
+
+    // Calculate age
+    let age = currentYear - dobDate.getFullYear();
+    const monthDiff = today.getMonth() - dobDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+
+    this.setState(prev => ({
+      form: { ...prev.form, dob, age: String(age) },
+      errors: { ...prev.errors, dob: "" }
+    }));
+  }
+
+  // Format CNIC: 37106-8234782-3
   formatCNIC(val) {
     const digits = val.replace(/\D/g, "").slice(0, 13);
     if (digits.length <= 5)  return digits;
@@ -471,49 +547,122 @@ class RegisterDonor extends Component {
     }));
   }
 
+  // Format WhatsApp: 0313-5495655
+  formatWhatsApp(val) {
+    const digits = val.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 4) return digits;
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  }
+
+  handleWhatsApp(e) {
+    const formatted = this.formatWhatsApp(e.target.value);
+    this.setState(prev => ({
+      form: { ...prev.form, whatsapp: formatted },
+      errors: { ...prev.errors, whatsapp: "" }
+    }));
+  }
+
   validate(s) {
     const { form } = this.state;
     const errs = {};
 
     if (s === 1) {
-      if (!form.fullName.trim())           errs.fullName          = "Full name is required.";
-      if (!form.fatherHusbandName.trim())  errs.fatherHusbandName = "This field is required.";
-      if (!form.dob && !form.age)          errs.dob               = "Enter date of birth or age.";
-      if (!form.gender)                    errs.gender            = "Select gender.";
-      if (!form.bloodGroup)                errs.bloodGroup        = "Select blood group.";
-      const cnicClean = form.cnic.replace(/\D/g, "");
-      if (!cnicClean)                      errs.cnic = "CNIC is required.";
-      else if (cnicClean.length !== 13)    errs.cnic = "CNIC must be 13 digits.";
+      // Photo required
+      if (!form.photo) errs.photo = "Photo is required.";
+
+      // Name: no numbers allowed
+      if (!form.fullName.trim()) {
+        errs.fullName = "Full name is required.";
+      } else if (/\d/.test(form.fullName)) {
+        errs.fullName = "Name must not contain numbers.";
+      }
+
+      if (!form.fatherHusbandName.trim()) {
+        errs.fatherHusbandName = "This field is required.";
+      } else if (/\d/.test(form.fatherHusbandName)) {
+        errs.fatherHusbandName = "Name must not contain numbers.";
+      }
+
+      // DOB required & not current year
+      if (!form.dob) {
+        errs.dob = "Date of birth is required.";
+      } else {
+        const dobYear = new Date(form.dob).getFullYear();
+        const currentYear = new Date().getFullYear();
+        if (dobYear >= currentYear) {
+          errs.dob = "Date of birth cannot be in the current year or future.";
+        }
+      }
+
+      if (!form.gender)     errs.gender     = "Select gender.";
+      if (!form.bloodGroup) errs.bloodGroup = "Select blood group.";
+
+      // CNIC format: XXXXX-XXXXXXX-X (13 digits)
+      const cnicDigits = form.cnic.replace(/\D/g, "");
+      if (!cnicDigits) {
+        errs.cnic = "CNIC is required.";
+      } else if (cnicDigits.length !== 13) {
+        errs.cnic = "CNIC must be 13 digits (e.g. 37106-8234782-3).";
+      }
     }
 
     if (s === 2) {
-      if (!form.whatsapp.trim())             errs.whatsapp        = "WhatsApp number is required.";
-      if (!form.email.trim())                errs.email           = "Email is required.";
-      else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email      = "Enter a valid email address.";
-      if (!form.password)                    errs.password        = "Password is required.";
-      else if (form.password.length < 6)     errs.password        = "Password must be at least 6 characters.";
-      if (form.password !== form.confirmPassword)
-                                             errs.confirmPassword = "Passwords do not match.";
-      if (!form.address.trim())              errs.address         = "Address is required.";
-      if (!form.city)                        errs.city            = "Select a city.";
+      // WhatsApp: XXXX-XXXXXXX (11 digits)
+      const waDigits = form.whatsapp.replace(/\D/g, "");
+      if (!form.whatsapp.trim()) {
+        errs.whatsapp = "WhatsApp number is required.";
+      } else if (waDigits.length !== 11) {
+        errs.whatsapp = "Enter a valid number (e.g. 0313-5495655).";
+      }
+
+      if (!form.email.trim()) {
+        errs.email = "Email is required.";
+      } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+        errs.email = "Enter a valid email address.";
+      }
+
+      // Password: min 8, uppercase, lowercase, number, special char
+      const pwRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_#^()\-+=])[A-Za-z\d@$!%*?&_#^()\-+=]{8,}$/;
+      if (!form.password) {
+        errs.password = "Password is required.";
+      } else if (!pwRegex.test(form.password)) {
+        errs.password = "Must be 8+ chars with uppercase, lowercase, number & special character.";
+      }
+
+      if (!form.confirmPassword) {
+        errs.confirmPassword = "Please confirm your password.";
+      } else if (form.password !== form.confirmPassword) {
+        errs.confirmPassword = "Passwords do not match.";
+      }
+
+      if (!form.address.trim()) errs.address = "Address is required.";
+      if (!form.city)           errs.city    = "Select a city.";
     }
 
     if (s === 3) {
       if (!form.donationLocation)          errs.donationLocation = "Select donation preference.";
       if (form.availableDays.length === 0) errs.availableDays    = "Select at least one available day.";
-      if (!form.timeSlot)                  errs.timeSlot         = "Select preferred time slot.";
+      if (!form.preferredTimeFrom)         errs.preferredTimeFrom = "Select start time.";
+      if (!form.preferredTimeTo)           errs.preferredTimeTo   = "Select end time.";
+      if (form.preferredTimeFrom && form.preferredTimeTo && form.preferredTimeFrom >= form.preferredTimeTo) {
+        errs.preferredTimeTo = "'To' time must be after 'From' time.";
+      }
     }
 
     if (s === 4) {
-      if (!form.emergencyName.trim())      errs.emergencyName     = "Name is required.";
-      if (!form.emergencyRelation.trim())  errs.emergencyRelation = "Relationship is required.";
-      if (!form.emergencyPhone.trim())     errs.emergencyPhone    = "Phone number is required.";
+      if (!form.emergencyName.trim()) {
+        errs.emergencyName = "Name is required.";
+      } else if (/\d/.test(form.emergencyName)) {
+        errs.emergencyName = "Name must not contain numbers.";
+      }
+      if (!form.emergencyRelation.trim()) errs.emergencyRelation = "Relationship is required.";
+      if (!form.emergencyPhone.trim())    errs.emergencyPhone    = "Phone number is required.";
     }
 
     if (s === 5) {
-      if (!form.declarationTrue)           errs.declarationTrue    = "You must confirm the declaration.";
-      if (!form.declarationConsent)        errs.declarationConsent = "You must consent to data storage.";
-      if (!form.signature.trim())          errs.signature          = "Please enter your full name as signature.";
+      if (!form.declarationTrue)    errs.declarationTrue    = "You must confirm the declaration.";
+      if (!form.declarationConsent) errs.declarationConsent = "You must consent to data storage.";
+      if (!form.signature.trim())   errs.signature          = "Please enter your full name as signature.";
     }
 
     return errs;
@@ -542,17 +691,22 @@ class RegisterDonor extends Component {
     const { form } = this.state;
     const formData = new FormData();
 
+    // Combine time into one string for backend
+    const timeSlot = `${form.preferredTimeFrom} – ${form.preferredTimeTo}`;
+
     Object.entries(form).forEach(([k, v]) => {
-      if (k === "availableDays")        formData.append(k, v.join(","));
-      else if (k === "photo" && v)      formData.append(k, v);
-      else if (k === "confirmPassword") formData.append("confirm_password", v); // backend expects confirm_password
-      else if (k !== "photo")           formData.append(k, v);
+      if (k === "availableDays")          formData.append(k, v.join(","));
+      else if (k === "photo" && v)        formData.append(k, v);
+      else if (k === "confirmPassword")   formData.append("confirm_password", v);
+      else if (k === "preferredTimeFrom" || k === "preferredTimeTo") return; // skip, combined below
+      else if (k !== "photo")             formData.append(k, v);
     });
+
+    formData.append("timeSlot", timeSlot);
 
     try {
       const res = await fetch("http://localhost:8080/awt/backend/public/api/donors/register", {
         method: "POST",
-        
         body: formData
       });
 
@@ -626,8 +780,8 @@ class RegisterDonor extends Component {
     const { form, errors, photoPreview, step } = this.state;
     const common = { form, errors, onChange: this.handleChange };
     switch (step) {
-      case 1: return <StepPersonal {...common} photoPreview={photoPreview} onCNIC={this.handleCNIC} onPhoto={this.handlePhoto} />;
-      case 2: return <StepContact {...common} />;
+      case 1: return <StepPersonal {...common} photoPreview={photoPreview} onCNIC={this.handleCNIC} onPhoto={this.handlePhoto} onDOB={this.handleDOB} />;
+      case 2: return <StepContact  {...common} onWhatsApp={this.handleWhatsApp} />;
       case 3: return <StepPreferences {...common} />;
       case 4: return <StepEmergency {...common} />;
       case 5: return <StepConsent {...common} />;
