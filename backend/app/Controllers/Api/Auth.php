@@ -63,7 +63,6 @@ class Auth extends BaseController
             'id'          => $user['id'],
             'name'        => $user['name'],
             'email'       => $user['email'],
-            'blood_group' => $user['blood_group'],
             'role'        => $user['accountType'],
         ];
 
@@ -123,8 +122,7 @@ class Auth extends BaseController
         $name       = trim($json['name']        ?? '');
         $email      = trim($json['email']       ?? '');
         $password   = trim($json['password']    ?? '');
-        $phone      = trim($json['phone']       ?? '');
-        $bloodGroup = trim($json['blood_group'] ?? '');
+       
 
         $errors = [];
 
@@ -153,15 +151,8 @@ class Auth extends BaseController
     'accountType' => $role,
 ];
 
-// phone for csr and donor
-if (in_array($role, ['csr', 'donor'])) {
-    $insertData['phone'] = $phone;
-}
 
-// blood_group for donor only
-if ($role === 'donor') {
-    $insertData['blood_group'] = $bloodGroup ?: null;
-}
+
 
 if ($createdBy !== null) {
     $insertData['created_by'] = $createdBy;

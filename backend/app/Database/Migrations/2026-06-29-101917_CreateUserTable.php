@@ -28,33 +28,24 @@ class CreateUserTable extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 255,
             ],
-          'accountType' => [
-    'type'       => 'ENUM',
-    'constraint' => ['admin', 'csr', 'donor'],
-    'default'    => 'donor',
-],
-// add this too:
-'created_by' => [
-    'type'     => 'INT',
-    'unsigned' => true,
-    'null'     => true,
-    'default'  => null,
-],
+            'accountType' => [
+                'type'       => 'ENUM',
+                'constraint' => ['admin', 'csr', 'donor'],
+                'default'    => 'donor',
+            ],
+            // add this too:
+            'created_by' => [
+                'type'     => 'INT',
+                'unsigned' => true,
+                'null'     => true,
+                'default'  => null,
+            ],
             'status' => [
                 'type'       => 'ENUM',
                 'constraint' => ['active', 'inactive'],
                 'default'    => 'active',
             ],
-            'phone' => [
-    'type'       => 'VARCHAR',
-    'constraint' => 20,
-    'null'       => true,
-],
-'blood_group' => [
-    'type'       => 'VARCHAR',
-    'constraint' => 10,
-    'null'       => true,
-],
+           
             'last_login' => [
                 'type' => 'DATETIME',
                 'null' => true,

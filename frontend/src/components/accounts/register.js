@@ -22,6 +22,9 @@ const TIME_SLOTS = [
 const STEP_LABELS = ["Personal", "Contact", "Preferences", "Emergency", "Consent"];
 
 const INITIAL_FORM = {
+  email: "",
+  password: "",
+  confirmPassword: "",
   fullName: "",
   fatherHusbandName: "",
   dob: "",
@@ -31,7 +34,6 @@ const INITIAL_FORM = {
   bloodGroup: "",
   photo: null,
   whatsapp: "",
-  email: "",
   address: "",
   city: "",
   donationLocation: "",
@@ -85,7 +87,7 @@ class StepPersonal extends Component {
           <label className="cursor-pointer" style={{ cursor: "pointer" }}>
             <div
               className="rounded-circle border border-2 border-danger d-flex align-items-center justify-content-center overflow-hidden bg-danger-subtle"
-              style={{ width: 90, height: 90, borderStyle: "dashed !important" }}
+              style={{ width: 90, height: 90 }}
             >
               {photoPreview
                 ? <img src={photoPreview} alt="Preview" className="w-100 h-100 object-fit-cover" />
@@ -198,14 +200,37 @@ class StepContact extends Component {
             </Field>
           </div>
           <div className="col-md-6">
-            <Field label="Email Address (optional)">
+            <Field label="Email Address *" error={errors.email}>
               <input
-                type="email" className="form-control"
+                type="email"
+                className={`form-control ${errors.email ? "is-invalid" : ""}`}
                 name="email" value={form.email}
                 onChange={onChange} placeholder="yourname@email.com"
               />
             </Field>
           </div>
+
+          <div className="col-md-6">
+            <Field label="Password *" error={errors.password}>
+              <input
+                type="password"
+                className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                name="password" value={form.password}
+                onChange={onChange} placeholder="Min. 6 characters"
+              />
+            </Field>
+          </div>
+          <div className="col-md-6">
+            <Field label="Confirm Password *" error={errors.confirmPassword}>
+              <input
+                type="password"
+                className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+                name="confirmPassword" value={form.confirmPassword}
+                onChange={onChange} placeholder="Repeat password"
+              />
+            </Field>
+          </div>
+
           <div className="col-12">
             <Field label="Complete Address *" error={errors.address}>
               <textarea
@@ -449,6 +474,7 @@ class RegisterDonor extends Component {
   validate(s) {
     const { form } = this.state;
     const errs = {};
+
     if (s === 1) {
       if (!form.fullName.trim())           errs.fullName          = "Full name is required.";
       if (!form.fatherHusbandName.trim())  errs.fatherHusbandName = "This field is required.";
@@ -459,28 +485,37 @@ class RegisterDonor extends Component {
       if (!cnicClean)                      errs.cnic = "CNIC is required.";
       else if (cnicClean.length !== 13)    errs.cnic = "CNIC must be 13 digits.";
     }
+
     if (s === 2) {
-      if (!form.whatsapp.trim())           errs.whatsapp = "WhatsApp number is required.";
-      else if (!/^(\+92|0)[0-9]{10}$/.test(form.whatsapp.replace(/\s/g, "")))
-                                           errs.whatsapp = "Enter a valid Pakistani number.";
-      if (!form.address.trim())            errs.address  = "Address is required.";
-      if (!form.city)                      errs.city     = "Select a city.";
+      if (!form.whatsapp.trim())             errs.whatsapp        = "WhatsApp number is required.";
+      if (!form.email.trim())                errs.email           = "Email is required.";
+      else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email      = "Enter a valid email address.";
+      if (!form.password)                    errs.password        = "Password is required.";
+      else if (form.password.length < 6)     errs.password        = "Password must be at least 6 characters.";
+      if (form.password !== form.confirmPassword)
+                                             errs.confirmPassword = "Passwords do not match.";
+      if (!form.address.trim())              errs.address         = "Address is required.";
+      if (!form.city)                        errs.city            = "Select a city.";
     }
+
     if (s === 3) {
       if (!form.donationLocation)          errs.donationLocation = "Select donation preference.";
       if (form.availableDays.length === 0) errs.availableDays    = "Select at least one available day.";
       if (!form.timeSlot)                  errs.timeSlot         = "Select preferred time slot.";
     }
+
     if (s === 4) {
       if (!form.emergencyName.trim())      errs.emergencyName     = "Name is required.";
       if (!form.emergencyRelation.trim())  errs.emergencyRelation = "Relationship is required.";
       if (!form.emergencyPhone.trim())     errs.emergencyPhone    = "Phone number is required.";
     }
+
     if (s === 5) {
       if (!form.declarationTrue)           errs.declarationTrue    = "You must confirm the declaration.";
       if (!form.declarationConsent)        errs.declarationConsent = "You must consent to data storage.";
       if (!form.signature.trim())          errs.signature          = "Please enter your full name as signature.";
     }
+
     return errs;
   }
 
@@ -499,22 +534,40 @@ class RegisterDonor extends Component {
   async handleSubmit(e) {
     e.preventDefault();
     const errs = this.validate(5);
-    if (Object.keys(errs).length > 0) { this.setState({ errors: errs }); return; }
+    if (Object.keys(errs).length > 0) {
+      this.setState({ errors: errs });
+      return;
+    }
 
     const { form } = this.state;
     const formData = new FormData();
+
     Object.entries(form).forEach(([k, v]) => {
-      if (k === "availableDays")   formData.append(k, v.join(","));
-      else if (k === "photo" && v) formData.append(k, v);
-      else if (k !== "photo")      formData.append(k, v);
+      if (k === "availableDays")        formData.append(k, v.join(","));
+      else if (k === "photo" && v)      formData.append(k, v);
+      else if (k === "confirmPassword") formData.append("confirm_password", v); // backend expects confirm_password
+      else if (k !== "photo")           formData.append(k, v);
     });
 
     try {
-      const res = await fetch("/api/donors/register", { method: "POST", body: formData });
-      if (res.ok) this.setState({ submitted: true });
-      else alert("Submission failed. Please try again.");
-    } catch {
-      this.setState({ submitted: true }); // demo fallback
+      const res = await fetch("http://localhost:8080/awt/backend/public/api/donors/register", {
+        method: "POST",
+        
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Registration successful:", data);
+        this.setState({ submitted: true });
+      } else {
+        const errorData = await res.json();
+        alert("Submission failed: " + (errorData.message || "Please try again."));
+        console.error("Registration errors:", errorData.errors);
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Unable to connect to the server. Please try again.");
     }
   }
 
@@ -532,7 +585,6 @@ class RegisterDonor extends Component {
     const { step } = this.state;
     return (
       <div className="mb-4">
-        {/* Step dots */}
         <div className="d-flex align-items-center mb-2">
           {STEP_LABELS.map((label, i) => (
             <div key={i} className="d-flex align-items-center flex-grow-1">
@@ -557,7 +609,6 @@ class RegisterDonor extends Component {
             </div>
           ))}
         </div>
-        {/* Step labels */}
         <div className="d-flex">
           {STEP_LABELS.map((label, i) => (
             <div key={i} className="flex-grow-1 text-center" style={{ fontSize: 11 }}>
@@ -619,7 +670,6 @@ class RegisterDonor extends Component {
                 <h4 className="fw-bold mb-1">Donor Registration</h4>
                 <p className="mb-0 opacity-75 small">Aziz Welfare Trust — Blood Bank</p>
               </div>
-              {/* <span style={{ fontSize: 38, opacity: 0.85 }}>🩸</span> */}
             </div>
             {this.renderProgress()}
           </div>
