@@ -18,8 +18,6 @@ class Auth extends BaseController
         }
     }
 
-    // ── POST /api/auth/login ──────────────────────────────────
-
     public function login(): \CodeIgniter\HTTP\ResponseInterface
     {
         $json = $this->request->getJSON(true);
@@ -60,11 +58,10 @@ class Auth extends BaseController
         $this->userModel->updateLastLogin($user['id']);
 
         $_SESSION['awt_user'] = [
-            'id'          => $user['id'],
-            'name'        => $user['name'],
-            'email'       => $user['email'],
-            'blood_group' => $user['blood_group'],
-            'role'        => $user['accountType'],
+            'id'    => $user['id'],
+            'name'  => $user['name'],
+            'email' => $user['email'],
+            'role'  => $user['accountType'],
         ];
 
         return $this->response->setStatusCode(200)->setJSON([
@@ -74,16 +71,10 @@ class Auth extends BaseController
         ]);
     }
 
-    // ── POST /api/auth/register ───────────────────────────────
-    // Public: donor self-registration only
-
     public function register(): \CodeIgniter\HTTP\ResponseInterface
     {
         return $this->handleRegister('donor', null);
     }
-
-    // ── POST /api/auth/register/admin ─────────────────────────
-    // Postman only — protected by a secret key header
 
     public function registerAdmin(): \CodeIgniter\HTTP\ResponseInterface
     {
@@ -99,9 +90,6 @@ class Auth extends BaseController
         return $this->handleRegister('admin', null);
     }
 
-    // ── POST /api/auth/register/csr ───────────────────────────
-    // Admin only
-
     public function registerCsr(): \CodeIgniter\HTTP\ResponseInterface
     {
         if (empty($_SESSION['awt_user']) || $_SESSION['awt_user']['role'] !== 'admin') {
@@ -114,8 +102,6 @@ class Auth extends BaseController
         return $this->handleRegister('csr', $_SESSION['awt_user']['id']);
     }
 
-    // ── Shared registration logic ─────────────────────────────
-
     private function handleRegister(string $role, ?int $createdBy): \CodeIgniter\HTTP\ResponseInterface
     {
         $json = $this->request->getJSON(true);
@@ -127,12 +113,22 @@ class Auth extends BaseController
         $bloodGroup = trim($json['blood_group'] ?? '');
 
         $errors = [];
+        // Phone validation (optional field)
+if (!empty($phone)) {
+    $cleaned = str_replace('-', '', $phone);
+    $mobile   = preg_match('/^03[0-9]{9}$/', $cleaned);   // 0315-1863475
+    $landline = preg_match('/^0[1-9][1-9]\d{7}$/', $cleaned); // 051-3657894
 
-        if (empty($name))                                    $errors['name']     = 'Name is required.';
-        if (empty($email))                                   $errors['email']    = 'Email is required.';
-        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL))  $errors['email']    = 'Enter a valid email.';
-        if (empty($password))                                $errors['password'] = 'Password is required.';
-        elseif (strlen($password) < 6)                       $errors['password'] = 'Password must be at least 6 characters.';
+    if (!$mobile && !$landline) {
+        $errors['phone'] = 'Enter a valid Pakistani number (e.g. 051-3657894 or 0315-1863475).';
+    }
+}
+
+        if (empty($name))                                   $errors['name']     = 'Name is required.';
+        if (empty($email))                                  $errors['email']    = 'Email is required.';
+        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email']    = 'Enter a valid email.';
+        if (empty($password))                               $errors['password'] = 'Password is required.';
+        elseif (strlen($password) < 6)                      $errors['password'] = 'Password must be at least 6 characters.';
 
         if (empty($errors['email']) && $this->userModel->findByEmail($email)) {
             $errors['email'] = 'This email is already registered.';
@@ -147,27 +143,20 @@ class Auth extends BaseController
         }
 
         $insertData = [
-    'name'        => $name,
-    'email'       => $email,
-    'password'    => password_hash($password, PASSWORD_BCRYPT),
-    'accountType' => $role,
-];
+            'name'        => $name,
+            'email'       => $email,
+            'password'    => password_hash($password, PASSWORD_BCRYPT),
+            'accountType' => $role,
+        ];
 
-// phone for csr and donor
-if (in_array($role, ['csr', 'donor'])) {
-    $insertData['phone'] = $phone;
-}
+        if (in_array($role, ['csr', 'donor'])) {
+            $insertData['phone'] = $phone;
+        }
 
-// blood_group for donor only
-if ($role === 'donor') {
-    $insertData['blood_group'] = $bloodGroup ?: null;
-}
+        if ($role === 'donor') {
+            $insertData['blood_group'] = $bloodGroup ?: null;
+        }
 
-if ($createdBy !== null) {
-    $insertData['created_by'] = $createdBy;
-}
-
-        // Track who created CSR accounts
         if ($createdBy !== null) {
             $insertData['created_by'] = $createdBy;
         }
@@ -183,14 +172,13 @@ if ($createdBy !== null) {
 
         $user = $this->userModel->find($id);
 
-        // Auto-login only for donor self-registration
         if ($role === 'donor') {
             $_SESSION['awt_user'] = [
-    'id'    => $user['id'],
-    'name'  => $user['name'],
-    'email' => $user['email'],
-    'role'  => $user['accountType'],  // map accountType → role for session
-];
+                'id'    => $user['id'],
+                'name'  => $user['name'],
+                'email' => $user['email'],
+                'role'  => $user['accountType'],
+            ];
         }
 
         $statusCode = $role === 'donor' ? 201 : 200;
@@ -207,12 +195,10 @@ if ($createdBy !== null) {
                 'id'    => $user['id'],
                 'name'  => $user['name'],
                 'email' => $user['email'],
-                'role'  => $user['role'],
+                'role'  => $user['accountType'],  // ✅ fixed
             ],
         ]);
     }
-
-    // ── POST /api/auth/logout ─────────────────────────────────
 
     public function logout(): \CodeIgniter\HTTP\ResponseInterface
     {
@@ -224,8 +210,6 @@ if ($createdBy !== null) {
             'message' => 'Logged out successfully.',
         ]);
     }
-
-    // ── GET /api/auth/me ──────────────────────────────────────
 
     public function me(): \CodeIgniter\HTTP\ResponseInterface
     {

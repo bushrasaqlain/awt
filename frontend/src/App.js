@@ -5,6 +5,9 @@ import Layout from "./layout/Layout";
 import DefaultHeader2 from "./layout/header";
 import Login from "./components/accounts/login";
 import Register from "./components/accounts/register";
+import AdminDashboard from "./components/dbadmin/dashboard-area";
+import Cities from "./components/dbadmin/city";
+import Management from "./components/dbadmin/manager";
 
 function Home() {
   return (
@@ -23,6 +26,9 @@ function App() {
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin/dashboard-area" element={<AdminDashboard />} />
+        <Route path="/admin/city" element={<Cities />} />
+        <Route path="/admin/manager"           element={<Management />} />
       </Routes>
     </BrowserRouter>
   );

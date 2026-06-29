@@ -60,11 +60,17 @@ class Login extends Component {
       const data = await res.json();
 
       if (res.ok) {
-        // Save token and redirect
-        localStorage.setItem("awt_token", data.token);
-        localStorage.setItem("awt_user",  JSON.stringify(data.user));
+    localStorage.setItem("awt_user", JSON.stringify(data.user));
+    
+    const role = data.user?.role;
+    if (role === "admin") {
+        window.location.href = "/admin/dashboard-area";
+    } else if (role === "csr") {
+        window.location.href = "/csr/donors";
+    } else {
         window.location.href = "/dashboard";
-      } else {
+    }
+} else {
         this.setState({ serverError: data.message || "Invalid email or password." });
       }
     } catch {
