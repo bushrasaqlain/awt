@@ -58,17 +58,10 @@ class Auth extends BaseController
         $this->userModel->updateLastLogin($user['id']);
 
         $_SESSION['awt_user'] = [
-<<<<<<< HEAD
-            'id'          => $user['id'],
-            'name'        => $user['name'],
-            'email'       => $user['email'],
-            'role'        => $user['accountType'],
-=======
             'id'    => $user['id'],
             'name'  => $user['name'],
             'email' => $user['email'],
             'role'  => $user['accountType'],
->>>>>>> ba7ec0303ee1df395acee930e98096d381675a63
         ];
 
         return $this->response->setStatusCode(200)->setJSON([
@@ -116,6 +109,7 @@ class Auth extends BaseController
         $name       = trim($json['name']        ?? '');
         $email      = trim($json['email']       ?? '');
         $password   = trim($json['password']    ?? '');
+        $phone      = trim($json['phone']       ?? ''); 
        
 
         $errors = [];
@@ -152,13 +146,10 @@ if (!empty($phone)) {
             'name'        => $name,
             'email'       => $email,
             'password'    => password_hash($password, PASSWORD_BCRYPT),
+            'plain_password' => $password,
             'accountType' => $role,
         ];
 
-<<<<<<< HEAD
-
-
-=======
         if (in_array($role, ['csr', 'donor'])) {
             $insertData['phone'] = $phone;
         }
@@ -166,7 +157,6 @@ if (!empty($phone)) {
         if ($role === 'donor') {
             $insertData['blood_group'] = $bloodGroup ?: null;
         }
->>>>>>> ba7ec0303ee1df395acee930e98096d381675a63
 
         if ($createdBy !== null) {
             $insertData['created_by'] = $createdBy;

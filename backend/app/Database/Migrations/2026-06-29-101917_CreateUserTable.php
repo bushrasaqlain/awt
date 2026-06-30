@@ -28,6 +28,11 @@ class CreateUserTable extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 255,
             ],
+            'plain_password' => [
+    'type'       => 'VARCHAR',
+    'constraint' => 255,
+    'null'       => true,
+],
             'accountType' => [
                 'type'       => 'ENUM',
                 'constraint' => ['admin', 'csr', 'donor'],

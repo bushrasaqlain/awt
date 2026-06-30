@@ -14,6 +14,8 @@ class UserModel extends Model
     'name',
     'email',
     'password',
+    'phone',
+    'plain_password',
     'accountType',   
     'status',
     'last_login',
