@@ -90,17 +90,19 @@ class Auth extends BaseController
         return $this->handleRegister('admin', null);
     }
 
-    public function registerCsr(): \CodeIgniter\HTTP\ResponseInterface
-    {
-        if (empty($_SESSION['awt_user']) || $_SESSION['awt_user']['role'] !== 'admin') {
-            return $this->response->setStatusCode(403)->setJSON([
-                'status'  => false,
-                'message' => 'Only admins can register CSR accounts.',
-            ]);
-        }
-
-        return $this->handleRegister('csr', $_SESSION['awt_user']['id']);
+ public function registerCsr(): \CodeIgniter\HTTP\ResponseInterface
+{
+    log_message('debug', 'Session: ' . json_encode($_SESSION['awt_user'] ?? 'EMPTY'));
+    
+    if (empty($_SESSION['awt_user']) || $_SESSION['awt_user']['role'] !== 'admin') {
+        return $this->response->setStatusCode(403)->setJSON([
+            'status'  => false,
+            'message' => 'Only admins can register CSR accounts.',
+        ]);
     }
+
+    return $this->handleRegister('csr', $_SESSION['awt_user']['id']);
+}
 
     private function handleRegister(string $role, ?int $createdBy): \CodeIgniter\HTTP\ResponseInterface
     {
