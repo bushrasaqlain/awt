@@ -4,16 +4,17 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Models\CsrModel;
 use App\Models\BloodStockModel;
 use App\Models\ActivityLogModel;
 
 class Csr extends BaseController
 {
-    private UserModel $userModel;
+    private CsrModel $csrModel;
 
     public function __construct()
     {
-        $this->userModel = new UserModel();
+        $this->csrModel = new CsrModel();
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -64,13 +65,12 @@ class Csr extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Forbidden.']);
         }
 
-        $csrs = $this->userModel
-            ->where('accountType', 'csr')
+        $csrs = $this->csrModel
             ->orderBy('created_at', 'DESC')
             ->findAll();
 
         $csrs = array_map(function ($c) {
-            unset($c['password']);
+            unset($c['password'], $c['plain_password']);
             return $c;
         }, $csrs);
 
@@ -82,7 +82,6 @@ class Csr extends BaseController
 
     // -------------------------------------------------------
     // GET /api/stock
-    // Returns all blood stock
     // -------------------------------------------------------
     public function stock(): \CodeIgniter\HTTP\ResponseInterface
     {
@@ -91,10 +90,6 @@ class Csr extends BaseController
         return $this->success($stock, 'Stock fetched successfully');
     }
 
-    // -------------------------------------------------------
-    // POST /api/stock/add
-    // Body: { blood_group_id, units, note }
-    // -------------------------------------------------------
     public function add()
     {
         $input = $this->request->getJSON(true);
@@ -119,10 +114,6 @@ class Csr extends BaseController
         return $this->success(['units_available' => $newUnits], "Added $units unit(s) successfully.");
     }
 
-    // -------------------------------------------------------
-    // POST /api/stock/edit
-    // Body: { blood_group_id, units, note }
-    // -------------------------------------------------------
     public function edit()
     {
         $input = $this->request->getJSON(true);
@@ -146,10 +137,6 @@ class Csr extends BaseController
         return $this->success(['units_available' => $units], "Stock updated to $units unit(s).");
     }
 
-    // -------------------------------------------------------
-    // POST /api/stock/dispense
-    // Body: { blood_group_id, units, note }
-    // -------------------------------------------------------
     public function dispense()
     {
         $input = $this->request->getJSON(true);
@@ -178,10 +165,6 @@ class Csr extends BaseController
         return $this->success(['units_available' => $newUnits], "Dispensed $units unit(s) successfully.");
     }
 
-    // -------------------------------------------------------
-    // POST /api/stock/delete
-    // Body: { blood_group_id }
-    // -------------------------------------------------------
     public function delete()
     {
         $input = $this->request->getJSON(true);
@@ -201,10 +184,6 @@ class Csr extends BaseController
         return $this->success(['units_available' => 0], 'Blood bag record removed successfully.');
     }
 
-    // -------------------------------------------------------
-    // POST /api/stock/threshold
-    // Body: { blood_group_id, critical_threshold, low_threshold }
-    // -------------------------------------------------------
     public function threshold()
     {
         $input = $this->request->getJSON(true);
@@ -235,9 +214,6 @@ class Csr extends BaseController
         return $this->success(['critical_threshold' => $critical_threshold, 'low_threshold' => $low_threshold], 'Thresholds updated successfully.');
     }
 
-    // -------------------------------------------------------
-    // GET /api/stock/logs
-    // -------------------------------------------------------
     public function logs()
     {
         $logModel = new ActivityLogModel();
@@ -245,9 +221,6 @@ class Csr extends BaseController
         return $this->success($logs, 'Logs fetched successfully.');
     }
 
-    // -------------------------------------------------------
-    // GET /api/stock/search?blood_group_id=3
-    // -------------------------------------------------------
     public function search()
     {
         $blood_group_id = $this->request->getGet('blood_group_id');
@@ -271,7 +244,7 @@ class Csr extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Forbidden.']);
         }
 
-        $csr = $this->userModel->where('id', $id)->where('accountType', 'csr')->first();
+        $csr = $this->csrModel->find($id);
         if (!$csr) {
             return $this->response->setStatusCode(404)->setJSON(['status' => false, 'message' => 'CSR not found.']);
         }
@@ -295,16 +268,31 @@ class Csr extends BaseController
 
         $updateData = ['name' => $name, 'phone' => $phone, 'status' => $status];
 
+        $userModel = null;
         if (!empty($json['password'])) {
             if (strlen($json['password']) < 6) {
                 return $this->response->setStatusCode(422)->setJSON(['status' => false, 'message' => 'Password must be at least 6 characters.']);
             }
-            $updateData['password'] = password_hash($json['password'], PASSWORD_BCRYPT);
+            $hashed = password_hash($json['password'], PASSWORD_BCRYPT);
+            $updateData['password']       = $hashed;
+            $updateData['plain_password'] = $json['password'];
+
+            // keep the base "user" login record in sync
+            $userModel = new UserModel();
+            $userModel->update($csr['user_id'], [
+                'password'       => $hashed,
+                'plain_password' => $json['password'],
+            ]);
         }
 
-        $this->userModel->update($id, $updateData);
-        $updated = $this->userModel->find($id);
-        unset($updated['password']);
+        if ($name !== $csr['name']) {
+            $userModel = $userModel ?? new UserModel();
+            $userModel->update($csr['user_id'], ['name' => $name]);
+        }
+
+        $this->csrModel->update($id, $updateData);
+        $updated = $this->csrModel->find($id);
+        unset($updated['password'], $updated['plain_password']);
 
         return $this->response->setStatusCode(200)->setJSON(['status' => true, 'message' => 'CSR updated.', 'data' => $updated]);
     }
@@ -318,12 +306,15 @@ class Csr extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Forbidden.']);
         }
 
-        $csr = $this->userModel->where('id', $id)->where('accountType', 'csr')->first();
+        $csr = $this->csrModel->find($id);
         if (!$csr) {
             return $this->response->setStatusCode(404)->setJSON(['status' => false, 'message' => 'CSR not found.']);
         }
 
-        $this->userModel->delete($id);
+        $userModel = new UserModel();
+        $userModel->delete($csr['user_id']); // removes login record
+        $this->csrModel->delete($id);         // removes csr profile record
+
         return $this->response->setStatusCode(200)->setJSON(['status' => true, 'message' => 'CSR deleted.']);
     }
 }
