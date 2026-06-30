@@ -1325,12 +1325,67 @@ class RegisterDonor extends Component {
     );
   }
 
-  return (
-    <div className="min-vh-100 pt-5 mt-4 bg-light">
-      {/* ... rest of your form stays exactly the same ... */}
-    </div>
-  );
-}
+    return (
+      <div className="min-vh-100 pt-5 mt-4 bg-light">
+        <div
+          className="text-white py-4"
+          style={{
+            background: "linear-gradient(135deg, #7f1d1d 0%, #dc3545 100%)",
+          }}
+        >
+          <div className="container" style={{ maxWidth: 680 }}>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h4 className="fw-bold mb-1">Donor Registration</h4>
+                <p className="mb-0 opacity-75 small">AWT Blood Bank</p>
+              </div>
+            </div>
+            {this.renderProgress()}
+          </div>
+        </div>
+
+        <div className="container py-4" style={{ maxWidth: 680 }}>
+          <div className="card shadow-sm border-0">
+            <div className="card-body p-4">
+              <form onSubmit={this.handleSubmit}>
+                {this.renderStep()}
+                <div className="d-flex justify-content-between mt-4 pt-3 border-top">
+                  {step > 1 ? (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger px-4"
+                      onClick={this.prevStep}
+                    >
+                      ← Back
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+                  {step < this.totalSteps ? (
+                    <button
+                      type="button"
+                      className="btn btn-danger px-4"
+                      onClick={this.nextStep}
+                    >
+                      Continue →
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="btn px-4 text-white fw-semibold"
+                      style={{ background: "#7f1d1d" }}
+                    >
+                      Submit Registration
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default RegisterDonor;
