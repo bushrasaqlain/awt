@@ -15,7 +15,7 @@ class Donors extends BaseController
     {
         $this->donorModel = new DonorModel();
         $this->userModel = new UserModel();
-        
+
         // Enable session for auto-login
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -26,7 +26,7 @@ class Donors extends BaseController
     {
         try {
             log_message('debug', 'Donor registration request received');
-            
+
             // Get all POST data
             $fullName          = trim($this->request->getPost('fullName')          ?? '');
             $fatherHusbandName = trim($this->request->getPost('fatherHusbandName') ?? '');
@@ -34,6 +34,7 @@ class Donors extends BaseController
             $age               = trim($this->request->getPost('age')               ?? '');
             $gender            = trim($this->request->getPost('gender')            ?? '');
             $bloodGroup        = trim($this->request->getPost('bloodGroup')        ?? '');
+            $weight            = trim($this->request->getPost('weight')            ?? '');
             $cnic              = trim($this->request->getPost('cnic')              ?? '');
             $whatsapp          = trim($this->request->getPost('whatsapp')          ?? '');
             $email             = trim($this->request->getPost('email')             ?? '');
@@ -46,7 +47,7 @@ class Donors extends BaseController
             $emergencyRelation = trim($this->request->getPost('emergencyRelation') ?? '');
             $emergencyPhone    = trim($this->request->getPost('emergencyPhone')    ?? '');
             $signature         = trim($this->request->getPost('signature')         ?? '');
-            
+
             // Get password from POST (you'll need to add this to your form)
             $password          = trim($this->request->getPost('password')          ?? '');
             $confirmPassword   = trim($this->request->getPost('confirm_password')  ?? '');
@@ -76,9 +77,14 @@ class Donors extends BaseController
             // Donor validation
             if (empty($fullName))          $errors['fullName']          = 'Full name is required.';
             if (empty($fatherHusbandName)) $errors['fatherHusbandName'] = 'Father/husband name is required.';
-            if (empty($dob) && empty($age))$errors['dob']               = 'Date of birth or age is required.';
+            if (empty($dob) && empty($age)) $errors['dob']               = 'Date of birth or age is required.';
             if (empty($gender))            $errors['gender']            = 'Gender is required.';
             if (empty($bloodGroup))        $errors['bloodGroup']        = 'Blood group is required.';
+            if (empty($weight)) {
+                $errors['weight'] = 'Weight is required.';
+            } elseif (!is_numeric($weight) || $weight < 45 || $weight > 50) {
+                $errors['weight'] = 'Weight must be between 45-50 kg.';
+            }
             if (empty($whatsapp))          $errors['whatsapp']          = 'WhatsApp number is required.';
             if (empty($address))           $errors['address']           = 'Address is required.';
             if (empty($city))              $errors['city']              = 'City is required.';
@@ -118,7 +124,7 @@ class Donors extends BaseController
             ];
 
             $userId = $this->userModel->insert($userData);
-            
+
             if (!$userId) {
                 $error = $this->userModel->errors();
                 log_message('error', 'User creation error: ' . json_encode($error));
@@ -146,11 +152,12 @@ class Donors extends BaseController
             $donorData = [
                 'user_id'            => $userId,
                 'full_name'          => $fullName,
-                'father_husband_name'=> $fatherHusbandName,
+                'father_husband_name' => $fatherHusbandName,
                 'dob'                => !empty($dob) ? $dob : null,
                 'age'                => !empty($age) ? $age : null,
                 'gender'             => $gender,
                 'blood_group'        => $bloodGroup,
+                'weight'             => $weight, 
                 'cnic'               => $cnic,
                 'photo'              => $photoPath,
                 'whatsapp'           => $whatsapp,
@@ -169,7 +176,7 @@ class Donors extends BaseController
             if (!$this->donorModel->insert($donorData)) {
                 // Rollback user creation if donor creation fails
                 $this->userModel->delete($userId);
-                
+
                 $error = $this->donorModel->errors();
                 log_message('error', 'Donor creation error: ' . json_encode($error));
                 return $this->response->setStatusCode(500)->setJSON([
@@ -198,11 +205,10 @@ class Donors extends BaseController
                     'name' => $fullName,
                 ]
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Donor registration exception: ' . $e->getMessage());
             log_message('error', 'Stack trace: ' . $e->getTraceAsString());
-            
+
             return $this->response->setStatusCode(500)->setJSON([
                 'status'  => false,
                 'message' => 'Server error: ' . $e->getMessage()

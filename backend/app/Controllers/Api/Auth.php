@@ -58,17 +58,10 @@ class Auth extends BaseController
         $this->userModel->updateLastLogin($user['id']);
 
         $_SESSION['awt_user'] = [
-<<<<<<< HEAD
             'id'          => $user['id'],
             'name'        => $user['name'],
             'email'       => $user['email'],
             'role'        => $user['accountType'],
-=======
-            'id'    => $user['id'],
-            'name'  => $user['name'],
-            'email' => $user['email'],
-            'role'  => $user['accountType'],
->>>>>>> ba7ec0303ee1df395acee930e98096d381675a63
         ];
 
         return $this->response->setStatusCode(200)->setJSON([
@@ -116,26 +109,41 @@ class Auth extends BaseController
         $name       = trim($json['name']        ?? '');
         $email      = trim($json['email']       ?? '');
         $password   = trim($json['password']    ?? '');
-       
+        $phone      = trim($json['phone']       ?? ''); // FIXED: Added phone field
 
         $errors = [];
+
+        // Name validation
+        if (empty($name)) {
+            $errors['name'] = 'Name is required.';
+        }
+
+        // Email validation
+        if (empty($email)) {
+            $errors['email'] = 'Email is required.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Enter a valid email.';
+        }
+
+        // Password validation - FIXED: Password is now required and validated properly
+        if (empty($password)) {
+            $errors['password'] = 'Password is required.';
+        } elseif (strlen($password) < 8) { // Changed to 8 characters to match frontend validation
+            $errors['password'] = 'Password must be at least 8 characters.';
+        }
+
         // Phone validation (optional field)
-if (!empty($phone)) {
-    $cleaned = str_replace('-', '', $phone);
-    $mobile   = preg_match('/^03[0-9]{9}$/', $cleaned);   // 0315-1863475
-    $landline = preg_match('/^0[1-9][1-9]\d{7}$/', $cleaned); // 051-3657894
+        if (!empty($phone)) {
+            $cleaned = str_replace('-', '', $phone);
+            $mobile   = preg_match('/^03[0-9]{9}$/', $cleaned);   // 0315-1863475
+            $landline = preg_match('/^0[1-9][1-9]\d{7}$/', $cleaned); // 051-3657894
 
-    if (!$mobile && !$landline) {
-        $errors['phone'] = 'Enter a valid Pakistani number (e.g. 051-3657894 or 0315-1863475).';
-    }
-}
+            if (!$mobile && !$landline) {
+                $errors['phone'] = 'Enter a valid Pakistani number (e.g. 051-3657894 or 0315-1863475).';
+            }
+        }
 
-        if (empty($name))                                   $errors['name']     = 'Name is required.';
-        if (empty($email))                                  $errors['email']    = 'Email is required.';
-        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email']    = 'Enter a valid email.';
-        if (empty($password))                               $errors['password'] = 'Password is required.';
-        elseif (strlen($password) < 6)                      $errors['password'] = 'Password must be at least 6 characters.';
-
+        // Check if email already exists
         if (empty($errors['email']) && $this->userModel->findByEmail($email)) {
             $errors['email'] = 'This email is already registered.';
         }
@@ -148,25 +156,14 @@ if (!empty($phone)) {
             ]);
         }
 
+        // FIXED: Password is hashed using password_hash() with BCRYPT
         $insertData = [
             'name'        => $name,
             'email'       => $email,
-            'password'    => password_hash($password, PASSWORD_BCRYPT),
+            'password'    => password_hash($password, PASSWORD_BCRYPT), // Password is hashed, not plain text
             'accountType' => $role,
+            'phone'       => $phone, // Added phone to insert data
         ];
-
-<<<<<<< HEAD
-
-
-=======
-        if (in_array($role, ['csr', 'donor'])) {
-            $insertData['phone'] = $phone;
-        }
-
-        if ($role === 'donor') {
-            $insertData['blood_group'] = $bloodGroup ?: null;
-        }
->>>>>>> ba7ec0303ee1df395acee930e98096d381675a63
 
         if ($createdBy !== null) {
             $insertData['created_by'] = $createdBy;
@@ -183,6 +180,7 @@ if (!empty($phone)) {
 
         $user = $this->userModel->find($id);
 
+        // Auto-login for donors
         if ($role === 'donor') {
             $_SESSION['awt_user'] = [
                 'id'    => $user['id'],
@@ -206,7 +204,7 @@ if (!empty($phone)) {
                 'id'    => $user['id'],
                 'name'  => $user['name'],
                 'email' => $user['email'],
-                'role'  => $user['accountType'],  // ✅ fixed
+                'role'  => $user['accountType'],  
             ],
         ]);
     }
