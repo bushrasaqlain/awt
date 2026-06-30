@@ -11,21 +11,27 @@ const BLOOD_GROUPS = [
   "O-",
   "Unknown",
 ];
-
-const STEP_LABELS = [
-  "Personal",
-  "Contact",
-  "Preferences",
-  "Emergency",
-  "Consent",
+const RELATIONS = [
+  "Father",
+  "Mother",
+  "Brother",
+  "Sister",
+  "Husband",
+  "Wife",
+  "Son",
+  "Daughter",
+  "Uncle",
+  "Aunt",
+  "Cousin",
+  "Friend",
+  "Other",
 ];
+
+const STEP_LABELS = ["Personal", "Contact", "Preferences", "Emergency"];
 
 const INITIAL_FORM = {
   email: "",
-  password: "",
-  confirmPassword: "",
   fullName: "",
-  fatherHusbandName: "",
   dob: "",
   age: "",
   gender: "",
@@ -37,15 +43,9 @@ const INITIAL_FORM = {
   address: "",
   city: "",
   donationLocation: "",
-  availableDays: [],
-  preferredTimeFrom: "",
-  preferredTimeTo: "",
   emergencyName: "",
   emergencyRelation: "",
   emergencyPhone: "",
-  declarationTrue: false,
-  declarationConsent: false,
-  signature: "",
 };
 
 // ── Date helpers ───────────────────────────────────────────────
@@ -72,10 +72,19 @@ function getMinDob() {
 function calcAge(dobStr) {
   const dob = new Date(dobStr);
   const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const m = today.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-  return age;
+  let years = today.getFullYear() - dob.getFullYear();
+  let months = today.getMonth() - dob.getMonth();
+  let days = today.getDate() - dob.getDate();
+
+  if (days < 0) {
+    months--;
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  return { years, months };
 }
 
 function generateDonorId() {
@@ -561,17 +570,15 @@ class StepPersonal extends Component {
               />
             </Field>
           </div>
-          <div className="col-md-6">
-            <Field
-              label="Father's / Husband's Name *"
-              error={errors.fatherHusbandName}
-            >
+          <div className="col-6">
+            <Field label="CNIC Number *" error={errors.cnic}>
               <input
-                className={`form-control ${errors.fatherHusbandName ? "is-invalid" : ""}`}
-                name="fatherHusbandName"
-                value={form.fatherHusbandName}
-                onChange={onChange}
-                placeholder="Father's or husband's name"
+                className={`form-control ${errors.cnic ? "is-invalid" : ""}`}
+                name="cnic"
+                value={form.cnic}
+                onChange={onCNIC}
+                placeholder="XXXXX-XXXXXXX-X"
+                maxLength={15}
               />
             </Field>
           </div>
@@ -594,15 +601,15 @@ class StepPersonal extends Component {
             </Field>
           </div>
           <div className="col-md-6">
-            <Field label="Age (auto-calculated)">
-              <input
-                type="text"
-                className="form-control bg-light"
-                value={form.age ? `${form.age} years` : ""}
-                readOnly
-                placeholder="Auto-filled from DOB"
-              />
-            </Field>
+           <Field label="Age (auto-calculated)">
+  <input
+    type="text"
+    className="form-control bg-light"
+    value={form.age || ""}
+    readOnly
+    placeholder="Auto-filled from DOB"
+  />
+</Field>
           </div>
 
           <div className="col-md-6">
@@ -650,9 +657,8 @@ class StepPersonal extends Component {
                 step="0.1"
               />
               <div className="form-text text-muted">
-                Minimum weight requirement: <strong>45–160 kg</strong>{" "}
-                for blood donation. You must weigh between 45-160 kg to be
-                eligible.
+                Minimum weight requirement: <strong>45–160 kg</strong> for blood
+                donation. You must weigh between 45-160 kg to be eligible.
               </div>
               {form.weight && !errors.weight && (
                 <div
@@ -667,18 +673,7 @@ class StepPersonal extends Component {
             </Field>
           </div>
 
-          <div className="col-12">
-            <Field label="CNIC Number *" error={errors.cnic}>
-              <input
-                className={`form-control ${errors.cnic ? "is-invalid" : ""}`}
-                name="cnic"
-                value={form.cnic}
-                onChange={onCNIC}
-                placeholder="XXXXX-XXXXXXX-X"
-                maxLength={15}
-              />
-            </Field>
-          </div>
+          
         </div>
       </div>
     );
@@ -714,34 +709,6 @@ class StepContact extends Component {
                 value={form.email}
                 onChange={onChange}
                 placeholder="yourname@email.com"
-              />
-            </Field>
-          </div>
-
-          <div className="col-md-6">
-            <Field label="Password *" error={errors.password}>
-              <input
-                type="password"
-                className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                name="password"
-                value={form.password}
-                onChange={onChange}
-                placeholder="Min. 8 chars, A-z, 0-9, @#$..."
-              />
-              <div className="form-text">
-                Must include uppercase, lowercase, number & special character.
-              </div>
-            </Field>
-          </div>
-          <div className="col-md-6">
-            <Field label="Confirm Password *" error={errors.confirmPassword}>
-              <input
-                type="password"
-                className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
-                name="confirmPassword"
-                value={form.confirmPassword}
-                onChange={onChange}
-                placeholder="Repeat password"
               />
             </Field>
           </div>
@@ -809,72 +776,6 @@ class StepPreferences extends Component {
             ))}
           </div>
         </Field>
-
-        <Field label="Available Days *" error={errors.availableDays}>
-          <div className="d-flex gap-4 flex-wrap mt-1">
-            {["Weekdays (Mon–Fri)", "Weekends (Sat–Sun)", "Both"].map((d) => (
-              <div className="form-check" key={d}>
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  name="availableDays"
-                  value={d}
-                  id={`day_${d}`}
-                  checked={form.availableDays.includes(d)}
-                  onChange={onChange}
-                />
-                <label className="form-check-label" htmlFor={`day_${d}`}>
-                  {d}
-                </label>
-              </div>
-            ))}
-          </div>
-        </Field>
-
-        <Field
-          label="Preferred Time Slot *"
-          error={errors.preferredTimeFrom || errors.preferredTimeTo}
-        >
-          <div className="row g-2 mt-1">
-            <div className="col-md-6">
-              <label className="form-label small text-muted mb-1">From</label>
-              <input
-                type="time"
-                className={`form-control ${errors.preferredTimeFrom ? "is-invalid" : ""}`}
-                name="preferredTimeFrom"
-                value={form.preferredTimeFrom}
-                onChange={onChange}
-              />
-              {errors.preferredTimeFrom && (
-                <div className="text-danger small mt-1">
-                  {errors.preferredTimeFrom}
-                </div>
-              )}
-            </div>
-            <div className="col-md-6">
-              <label className="form-label small text-muted mb-1">To</label>
-              <input
-                type="time"
-                className={`form-control ${errors.preferredTimeTo ? "is-invalid" : ""}`}
-                name="preferredTimeTo"
-                value={form.preferredTimeTo}
-                onChange={onChange}
-              />
-              {errors.preferredTimeTo && (
-                <div className="text-danger small mt-1">
-                  {errors.preferredTimeTo}
-                </div>
-              )}
-            </div>
-          </div>
-          {form.preferredTimeFrom &&
-            form.preferredTimeTo &&
-            !errors.preferredTimeTo && (
-              <div className="form-text text-success mt-1">
-                ✓ Selected: {form.preferredTimeFrom} – {form.preferredTimeTo}
-              </div>
-            )}
-        </Field>
       </div>
     );
   }
@@ -901,13 +802,17 @@ class StepEmergency extends Component {
           </div>
           <div className="col-md-6">
             <Field label="Relationship *" error={errors.emergencyRelation}>
-              <input
-                className={`form-control ${errors.emergencyRelation ? "is-invalid" : ""}`}
+              <select
+                className={`form-select ${errors.emergencyRelation ? "is-invalid" : ""}`}
                 name="emergencyRelation"
                 value={form.emergencyRelation}
                 onChange={onChange}
-                placeholder="e.g. Brother, Wife, Father"
-              />
+              >
+                <option value="">-- Select Relationship --</option>
+                {RELATIONS.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
             </Field>
           </div>
           <div className="col-md-6">
@@ -929,77 +834,13 @@ class StepEmergency extends Component {
 }
 
 /* ── Step 5: Declaration & Consent ── */
-class StepConsent extends Component {
-  render() {
-    const { form, errors, onChange } = this.props;
-    return (
-      <div>
-        <SectionTitle icon="✍️" title="Declaration & Consent" />
-
-        <div className="alert alert-danger border-danger bg-danger-subtle text-danger-emphasis mb-4">
-          <small>
-            By submitting this form, I confirm that all information provided is
-            accurate and truthful. I understand that providing false information
-            may result in the rejection of my donor application.
-          </small>
-        </div>
-
-        <Field error={errors.declarationTrue}>
-          <div className="form-check">
-            <input
-              className={`form-check-input ${errors.declarationTrue ? "is-invalid" : ""}`}
-              type="checkbox"
-              name="declarationTrue"
-              id="declarationTrue"
-              checked={form.declarationTrue}
-              onChange={onChange}
-            />
-            <label className="form-check-label" htmlFor="declarationTrue">
-              I declare that the above information is true and correct.
-            </label>
-          </div>
-        </Field>
-
-        <Field error={errors.declarationConsent}>
-          <div className="form-check">
-            <input
-              className={`form-check-input ${errors.declarationConsent ? "is-invalid" : ""}`}
-              type="checkbox"
-              name="declarationConsent"
-              id="declarationConsent"
-              checked={form.declarationConsent}
-              onChange={onChange}
-            />
-            <label className="form-check-label" htmlFor="declarationConsent">
-              I consent to AWT Blood Bank storing my personal data for blood
-              donation purposes.
-            </label>
-          </div>
-        </Field>
-
-        <Field label="Digital Signature *" error={errors.signature}>
-          <input
-            className={`form-control ${errors.signature ? "is-invalid" : ""}`}
-            name="signature"
-            value={form.signature}
-            onChange={onChange}
-            placeholder="Type your full name as signature"
-          />
-          <div className="form-text">
-            Typing your full name acts as your digital signature and agreement.
-          </div>
-        </Field>
-      </div>
-    );
-  }
-}
 
 /* ── Main Component ── */
 class RegisterDonor extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      form: { ...INITIAL_FORM, availableDays: [] },
+      form: { ...INITIAL_FORM },
       photoPreview: null,
       submitted: false,
       errors: {},
@@ -1008,7 +849,7 @@ class RegisterDonor extends Component {
       showCard: false,
       cities: [],
     };
-    this.totalSteps = 5;
+    this.totalSteps = 4;
 
     this.handleChange = this.handleChange.bind(this);
     this.handlePhoto = this.handlePhoto.bind(this);
@@ -1026,16 +867,9 @@ class RegisterDonor extends Component {
     const { name, value, type, checked } = e.target;
     this.setState((prev) => {
       let updatedForm;
-      if (type === "checkbox" && name === "availableDays") {
-        const days = checked
-          ? [...prev.form.availableDays, value]
-          : prev.form.availableDays.filter((d) => d !== value);
-        updatedForm = { ...prev.form, availableDays: days };
-      } else if (type === "checkbox") {
-        updatedForm = { ...prev.form, [name]: checked };
-      } else {
-        updatedForm = { ...prev.form, [name]: value };
-      }
+
+      updatedForm = { ...prev.form, [name]: value };
+
       return { form: updatedForm, errors: { ...prev.errors, [name]: "" } };
     });
   }
@@ -1115,9 +949,11 @@ class RegisterDonor extends Component {
       return;
     }
 
-    const age = calcAge(dob);
+    const { years, months } = calcAge(dob);
+    const ageDisplay = `${years} year${years !== 1 ? "s" : ""} ${months} month${months !== 1 ? "s" : ""}`;
+
     this.setState((prev) => ({
-      form: { ...prev.form, dob, age: String(age) },
+      form: { ...prev.form, dob, age: ageDisplay, ageYears: years },
       errors: { ...prev.errors, dob: "" },
     }));
   }
@@ -1136,62 +972,62 @@ class RegisterDonor extends Component {
       errors: { ...prev.errors, cnic: "" },
     }));
   }
-  
-sendCardImage = async () => {
-  const cardElement = document.querySelector(".donor-card");
-  if (!cardElement) return;
 
-  const html2canvasModule = await import("html2canvas");
-  const canvas = await html2canvasModule.default(cardElement, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true,
-  });
+  sendCardImage = async () => {
+    const cardElement = document.querySelector(".donor-card");
+    if (!cardElement) return;
 
-  canvas.toBlob(async (blob) => {
-    const file = new File([blob], `donor-card-${this.state.donorId}.png`, {
-      type: "image/png",
+    const html2canvasModule = await import("html2canvas");
+    const canvas = await html2canvasModule.default(cardElement, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
     });
 
-    const shareData = {
-      files: [file],
-      title: "AWT Blood Bank - Donor Card",
-      text: `🩸 AWT Blood Bank\nDonor ID: ${this.state.donorId}\nName: ${this.state.form.fullName}\nBlood Group: ${this.state.form.bloodGroup}`,
-    };
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], `donor-card-${this.state.donorId}.png`, {
+        type: "image/png",
+      });
 
-    // Try native share (works on mobile, attaches actual image)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch (err) {
-        if (err.name === "AbortError") return; // user cancelled
-        console.error("Share failed, falling back:", err);
+      const shareData = {
+        files: [file],
+        title: "AWT Blood Bank - Donor Card",
+        text: `🩸 AWT Blood Bank\nDonor ID: ${this.state.donorId}\nName: ${this.state.form.fullName}\nBlood Group: ${this.state.form.bloodGroup}`,
+      };
+
+      // Try native share (works on mobile, attaches actual image)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          if (err.name === "AbortError") return; // user cancelled
+          console.error("Share failed, falling back:", err);
+        }
       }
-    }
 
-    // Fallback for desktop: download image, then open WhatsApp Web with text
-    const link = document.createElement("a");
-    link.download = `donor-card-${this.state.donorId}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+      // Fallback for desktop: download image, then open WhatsApp Web with text
+      const link = document.createElement("a");
+      link.download = `donor-card-${this.state.donorId}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
 
-    alert("Image downloaded. Please attach it manually in WhatsApp.");
+      alert("Image downloaded. Please attach it manually in WhatsApp.");
 
-    const message =
-      `🩸 *AWT Blood Bank - Blood Bank* 🩸\n\n` +
-      `*Donor ID:* ${this.state.donorId}\n` +
-      `*Name:* ${this.state.form.fullName}\n` +
-      `*Blood Group:* ${this.state.form.bloodGroup}\n` +
-      `Thank you for being a blood donor! ❤️`;
+      const message =
+        `🩸 *AWT Blood Bank - Blood Bank* 🩸\n\n` +
+        `*Donor ID:* ${this.state.donorId}\n` +
+        `*Name:* ${this.state.form.fullName}\n` +
+        `*Blood Group:* ${this.state.form.bloodGroup}\n` +
+        `Thank you for being a blood donor! ❤️`;
 
-    const phone = this.state.form.whatsapp.replace(/\D/g, "");
-    window.open(
-      `https://wa.me/92${phone}?text=${encodeURIComponent(message)}`,
-      "_blank",
-    );
-  }, "image/png");
-};
+      const phone = this.state.form.whatsapp.replace(/\D/g, "");
+      window.open(
+        `https://wa.me/92${phone}?text=${encodeURIComponent(message)}`,
+        "_blank",
+      );
+    }, "image/png");
+  };
   formatWhatsApp(val) {
     const digits = val.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 4) return digits;
@@ -1205,19 +1041,19 @@ sendCardImage = async () => {
       errors: { ...prev.errors, whatsapp: "" },
     }));
   }
-formatEmergencyPhone(val) {
-  const digits = val.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)}-${digits.slice(4)}`;
-}
+  formatEmergencyPhone(val) {
+    const digits = val.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 4) return digits;
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  }
 
-handleEmergencyPhone(e) {
-  const formatted = this.formatEmergencyPhone(e.target.value);
-  this.setState((prev) => ({
-    form: { ...prev.form, emergencyPhone: formatted },
-    errors: { ...prev.errors, emergencyPhone: "" },
-  }));
-}
+  handleEmergencyPhone(e) {
+    const formatted = this.formatEmergencyPhone(e.target.value);
+    this.setState((prev) => ({
+      form: { ...prev.form, emergencyPhone: formatted },
+      errors: { ...prev.errors, emergencyPhone: "" },
+    }));
+  }
   validate(s) {
     const { form } = this.state;
     const errs = {};
@@ -1231,11 +1067,6 @@ handleEmergencyPhone(e) {
       if (!form.fullName.trim()) errs.fullName = "Full name is required.";
       else if (/\d/.test(form.fullName))
         errs.fullName = "Name must not contain numbers.";
-
-      if (!form.fatherHusbandName.trim())
-        errs.fatherHusbandName = "This field is required.";
-      else if (/\d/.test(form.fatherHusbandName))
-        errs.fatherHusbandName = "Name must not contain numbers.";
 
       if (!form.dob) {
         errs.dob = "Date of birth is required.";
@@ -1278,18 +1109,6 @@ handleEmergencyPhone(e) {
       else if (!/\S+@\S+\.\S+/.test(form.email))
         errs.email = "Enter a valid email address.";
 
-      const pwRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_#^()\-+=])[A-Za-z\d@$!%*?&_#^()\-+=]{8,}$/;
-      if (!form.password) errs.password = "Password is required.";
-      else if (!pwRegex.test(form.password))
-        errs.password =
-          "Must be 8+ chars with uppercase, lowercase, number & special character.";
-
-      if (!form.confirmPassword)
-        errs.confirmPassword = "Please confirm your password.";
-      else if (form.password !== form.confirmPassword)
-        errs.confirmPassword = "Passwords do not match.";
-
       if (!form.address.trim()) errs.address = "Address is required.";
       if (!form.city) errs.city = "Select a city.";
     }
@@ -1297,43 +1116,22 @@ handleEmergencyPhone(e) {
     if (s === 3) {
       if (!form.donationLocation)
         errs.donationLocation = "Select donation preference.";
-      if (form.availableDays.length === 0)
-        errs.availableDays = "Select at least one available day.";
-      if (!form.preferredTimeFrom)
-        errs.preferredTimeFrom = "Select start time.";
-      if (!form.preferredTimeTo) errs.preferredTimeTo = "Select end time.";
-      if (
-        form.preferredTimeFrom &&
-        form.preferredTimeTo &&
-        form.preferredTimeFrom >= form.preferredTimeTo
-      )
-        errs.preferredTimeTo = "'To' time must be after 'From' time.";
     }
 
-   if (s === 4) {
-  if (!form.emergencyName.trim()) errs.emergencyName = "Name is required.";
-  else if (/\d/.test(form.emergencyName))
-    errs.emergencyName = "Name must not contain numbers.";
+    if (s === 4) {
+      if (!form.emergencyName.trim()) errs.emergencyName = "Name is required.";
+      else if (/\d/.test(form.emergencyName))
+        errs.emergencyName = "Name must not contain numbers.";
 
-  if (!form.emergencyRelation.trim())
-    errs.emergencyRelation = "Relationship is required.";
+      if (!form.emergencyRelation.trim())
+        errs.emergencyRelation = "Relationship is required.";
 
-  const emergDigits = form.emergencyPhone.replace(/\D/g, "");
-  if (!form.emergencyPhone.trim())
-    errs.emergencyPhone = "Phone number is required.";
-  else if (emergDigits.length !== 11)
-    errs.emergencyPhone = "Enter a valid number (e.g. 0300-1234567).";
-}
-
-    if (s === 5) {
-      if (!form.declarationTrue)
-        errs.declarationTrue = "You must confirm the declaration.";
-      if (!form.declarationConsent)
-        errs.declarationConsent = "You must consent to data storage.";
-      if (!form.signature.trim())
-        errs.signature = "Please enter your full name as signature.";
+      const emergDigits = form.emergencyPhone.replace(/\D/g, "");
+      if (!form.emergencyPhone.trim())
+        errs.emergencyPhone = "Phone number is required.";
+      else if (emergDigits.length !== 11)
+        errs.emergencyPhone = "Enter a valid number (e.g. 0300-1234567).";
     }
-
     return errs;
   }
 
@@ -1365,20 +1163,20 @@ handleEmergencyPhone(e) {
     const timeSlot = `${form.preferredTimeFrom} – ${form.preferredTimeTo}`;
 
     Object.entries(form).forEach(([k, v]) => {
-      if (k === "availableDays") formData.append(k, v.join(","));
-      else if (k === "photo" && v) formData.append(k, v);
-      else if (k === "confirmPassword") formData.append("confirm_password", v);
-      else if (k === "preferredTimeFrom" || k === "preferredTimeTo") return;
+      if (k === "photo" && v) formData.append(k, v);
       else if (k !== "photo") formData.append(k, v);
     });
 
     formData.append("timeSlot", timeSlot);
 
     try {
-      const res = await fetch("http://localhost/awt/backend/public/api/donors/register", {
-        method: "POST",
-        body: formData
-      });
+      const res = await fetch(
+        "http://localhost:8080/awt/backend/public/api/donors/register",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       if (res.ok) {
         const donorId = generateDonorId();
@@ -1402,7 +1200,7 @@ handleEmergencyPhone(e) {
 
   resetForm() {
     this.setState({
-      form: { ...INITIAL_FORM, availableDays: [] },
+      form: { ...INITIAL_FORM },
       photoPreview: null,
       submitted: false,
       errors: {},
@@ -1486,87 +1284,46 @@ handleEmergencyPhone(e) {
         );
       case 3:
         return <StepPreferences {...common} />;
-     case 4:
-  return (
-    <StepEmergency
-      {...common}
-      onEmergencyPhone={this.handleEmergencyPhone}
-    />
-  );
-      case 5:
-        return <StepConsent {...common} />;
+      case 4:
+        return (
+          <StepEmergency
+            {...common}
+            onEmergencyPhone={this.handleEmergencyPhone}
+          />
+        );
+
       default:
         return null;
     }
   }
 
-  render() {
-    const { submitted, step, form, donorId, showCard } = this.state;
+ render() {
+  const { submitted, step, form, donorId, showCard } = this.state;
 
-    if (submitted && showCard) {
-      const age = form.age || calcAge(form.dob);
-      const validity = getValidityDate();
-      const issueDate = getIssueDate();
-
-      return (
-        <div className="min-vh-100 pt-5 mt-3 bg-light d-flex align-items-center justify-content-center py-5">
-          <div style={{ maxWidth: 480, width: "100%" }}>
-            <DonorCard
-              fullName={form.fullName}
-              donorId={donorId}
-              age={age}
-              bloodGroup={form.bloodGroup}
-              whatsapp={form.whatsapp}
-              validity={validity}
-              issueDate={issueDate}
-              photoPreview={this.state.photoPreview}
-            />
-
-            {/* Action Buttons */}
-            <div className="d-flex gap-3 mt-4 justify-content-center">
-              <button
-                className="btn btn-danger px-4"
-                onClick={() => {
-                  // Trigger download
-                  const cardElement = document.querySelector(".donor-card");
-                  if (cardElement) {
-                    import("html2canvas").then((html2canvas) => {
-                      html2canvas
-                        .default(cardElement, {
-                          scale: 2,
-                          backgroundColor: "#ffffff",
-                          useCORS: true,
-                        })
-                        .then((canvas) => {
-                          const link = document.createElement("a");
-                          link.download = `donor-card-${donorId}.png`;
-                          link.href = canvas.toDataURL("image/png");
-                          link.click();
-                        });
-                    });
-                  }
-                }}
-              >
-                📥 Download Card
-              </button>
-
-             <button className="btn btn-success px-4" onClick={this.sendCardImage}>
-  📱 Send to WhatsApp
-</button>
-            </div>
-
-            <div className="mt-3 text-center">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={this.resetForm}
-              >
-                Register Another Donor
-              </button>
-            </div>
-          </div>
+  if (submitted) {
+    return (
+      <div className="min-vh-100 pt-5 mt-3 bg-light d-flex align-items-center justify-content-center py-5">
+        <div
+          className="card shadow-sm border-0 text-center p-5"
+          style={{ maxWidth: 480, width: "100%" }}
+        >
+          <div style={{ fontSize: 56 }}>✅</div>
+          <h3 className="fw-bold text-success mt-3">Registration Successful!</h3>
+          <p className="text-muted mt-2">
+            Thank you, <strong>{form.fullName}</strong>, for registering as a
+            blood donor with AWT Blood Bank. Our team will review your
+            information shortly.
+          </p>
+          <button
+            className="btn btn-outline-secondary mt-3"
+            onClick={this.resetForm}
+          >
+            Register Another Donor
+          </button>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
     return (
       <div className="min-vh-100 pt-5 mt-4 bg-light">
@@ -1580,9 +1337,7 @@ handleEmergencyPhone(e) {
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h4 className="fw-bold mb-1">Donor Registration</h4>
-                <p className="mb-0 opacity-75 small">
-                  AWT Blood Bank
-                </p>
+                <p className="mb-0 opacity-75 small">AWT Blood Bank</p>
               </div>
             </div>
             {this.renderProgress()}
