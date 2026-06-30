@@ -1,5 +1,16 @@
 import React, { Component } from "react";
-
+const BLOOD_GROUPS = [
+  { value: "-", label: "Select" },
+  { value: "1", label: "A+" },
+  { value: "2", label: "A-" },
+  { value: "3", label: "B+" },
+  { value: "4", label: "B-" },
+  { value: "5", label: "AB+" },
+  { value: "6", label: "AB-" },
+  { value: "7", label: "O+" },
+  { value: "8", label: "O-" },
+  { value: "9", label: "Unknown" },
+];
 // ─── API helpers ─────────────────────────────────────────────────────────────
 const api = {
   get: async (path) => {
@@ -25,8 +36,8 @@ function getStatus(units, crit, low) {
 
 const STATUS = {
   critical: { bg: "#FEE2E2", text: "#991B1B", dot: "#EF4444", border: "#FECACA" },
-  low:      { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B", border: "#FDE68A" },
-  ok:       { bg: "#D1FAE5", text: "#065F46", dot: "#10B981", border: "#A7F3D0" },
+  low: { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B", border: "#FDE68A" },
+  ok: { bg: "#D1FAE5", text: "#065F46", dot: "#10B981", border: "#A7F3D0" },
 };
 
 class Badge extends Component {
@@ -102,9 +113,9 @@ class Btn extends Component {
   render() {
     const { children, variant = "primary", full, onClick, disabled, style: s } = this.props;
     const variants = {
-      primary:   { background: "#C0392B", color: "#fff" },
+      primary: { background: "#C0392B", color: "#fff" },
       secondary: { background: "#F1F5F9", color: "#475569" },
-      danger:    { background: "#C0392B", color: "#fff" },
+      danger: { background: "#C0392B", color: "#fff" },
     };
     return (
       <button onClick={onClick} disabled={disabled} style={{
@@ -135,9 +146,7 @@ class ManageDonors extends Component {
       dispenseModal: false,
       searchModal: false,
       threshModal: false,
-
-      form: { blood_group_id: "1", units: "", note: "", critical_threshold: "", low_threshold: "" },
-      searchGroup: "all",
+      form: { blood_group_id: "1", units: "", note: "", critical_threshold: "", low_threshold: "", donor_id: "", donation_date: new Date().toISOString().split("T")[0] },
     };
 
     this.toastTimeout = null;
@@ -184,15 +193,17 @@ class ManageDonors extends Component {
       note: "",
       critical_threshold: s ? String(s.critical_threshold) : "",
       low_threshold: s ? String(s.low_threshold) : "",
+      donor_id: "",
+      donation_date: new Date().toISOString().split("T")[0],
     };
 
     const modalState = { form };
-    if (modal === "add")      modalState.addModal = true;
-    if (modal === "edit")     modalState.editModal = true;
-    if (modal === "delete")   modalState.deleteModal = true;
+    if (modal === "add") modalState.addModal = true;
+    if (modal === "edit") modalState.editModal = true;
+    if (modal === "delete") modalState.deleteModal = true;
     if (modal === "dispense") modalState.dispenseModal = true;
-    if (modal === "search")   modalState.searchModal = true;
-    if (modal === "thresh")   modalState.threshModal = true;
+    if (modal === "search") modalState.searchModal = true;
+    if (modal === "thresh") modalState.threshModal = true;
 
     this.setState(modalState);
   }
@@ -231,22 +242,22 @@ class ManageDonors extends Component {
       form, searchGroup,
     } = this.state;
 
-    const bloodGroupOptions = stock.map(s => ({ value: String(s.blood_group_id), label: s.blood_group }));
+    const bloodGroupOptions = BLOOD_GROUPS;
 
     // Computed stats
-    const totalUnits       = stock.reduce((a, s) => a + parseInt(s.units_available), 0);
-    const criticalGroups   = stock.filter(s => getStatus(s.units_available, s.critical_threshold, s.low_threshold) === "critical");
-    const lowGroups        = stock.filter(s => getStatus(s.units_available, s.critical_threshold, s.low_threshold) === "low");
-    const dispensedToday   = logs.filter(l => l.action === "dispense").slice(0, 10).reduce((a, l) => a + l.units, 0);
+    const totalUnits = stock.reduce((a, s) => a + parseInt(s.units_available), 0);
+    const criticalGroups = stock.filter(s => getStatus(s.units_available, s.critical_threshold, s.low_threshold) === "critical");
+    const lowGroups = stock.filter(s => getStatus(s.units_available, s.critical_threshold, s.low_threshold) === "low");
+    const dispensedToday = logs.filter(l => l.action === "dispense").slice(0, 10).reduce((a, l) => a + l.units, 0);
 
     const filteredStock = searchGroup === "all" ? stock : stock.filter(s => s.blood_group_id == searchGroup);
-    const currentStock  = stock.find(s => s.blood_group_id == form.blood_group_id);
+    const currentStock = stock.find(s => s.blood_group_id == form.blood_group_id);
 
     const TABS = [
-      { key: "overview",    label: "Overview",    icon: "📊" },
-      { key: "stock",       label: "Stock",       icon: "🩸" },
-      { key: "logs",        label: "Logs",        icon: "📋" },
-      { key: "thresholds",  label: "Thresholds",  icon: "⚙️" },
+      { key: "overview", label: "Overview", icon: "📊" },
+      { key: "stock", label: "Stock", icon: "🩸" },
+      { key: "logs", label: "Logs", icon: "📋" },
+      { key: "thresholds", label: "Thresholds", icon: "⚙️" },
     ];
 
     if (loading) return (
@@ -308,10 +319,10 @@ class ManageDonors extends Component {
             <>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
                 {[
-                  { label: "Total units",       value: totalUnits.toLocaleString(), sub: "across all groups",                            color: "#0F172A" },
-                  { label: "Dispensed today",   value: dispensedToday,              sub: "units out",                                    color: "#0F172A" },
-                  { label: "Critical groups",   value: criticalGroups.length,       sub: criticalGroups.map(s=>s.blood_group).join(", ") || "None", color: "#C0392B" },
-                  { label: "Low stock alerts",  value: lowGroups.length,            sub: lowGroups.map(s=>s.blood_group).join(", ") || "None",      color: "#B45309" },
+                  { label: "Total units", value: totalUnits.toLocaleString(), sub: "across all groups", color: "#0F172A" },
+                  { label: "Dispensed today", value: dispensedToday, sub: "units out", color: "#0F172A" },
+                  { label: "Critical groups", value: criticalGroups.length, sub: criticalGroups.map(s => s.blood_group).join(", ") || "None", color: "#C0392B" },
+                  { label: "Low stock alerts", value: lowGroups.length, sub: lowGroups.map(s => s.blood_group).join(", ") || "None", color: "#B45309" },
                 ].map(s => (
                   <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "1.25rem", border: "1px solid #E2E8F0" }}>
                     <div style={{ fontSize: 12, color: "#64748B", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>{s.label}</div>
@@ -326,7 +337,7 @@ class ManageDonors extends Component {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
                   {stock.map(s => {
                     const st = getStatus(s.units_available, s.critical_threshold, s.low_threshold);
-                    const c  = STATUS[st];
+                    const c = STATUS[st];
                     const maxUnits = Math.max(...stock.map(x => x.units_available));
                     const pct = Math.min(100, Math.round((s.units_available / maxUnits) * 100));
                     return (
@@ -350,10 +361,10 @@ class ManageDonors extends Component {
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", marginBottom: 16 }}>Quick actions</h2>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                   {[
-                    { label: "Add blood bag",  icon: "➕", desc: "New units by blood group", modal: "add" },
-                    { label: "Edit bag count", icon: "✏️", desc: "Update existing count",    modal: "edit" },
-                    { label: "Dispense blood", icon: "🚑", desc: "Log units going out",      modal: "dispense" },
-                    { label: "Remove record",  icon: "🗑️", desc: "Reset stock to zero",      modal: "delete" },
+                    { label: "Add blood bag", icon: "➕", desc: "New units by blood group", modal: "add" },
+                    { label: "Edit bag count", icon: "✏️", desc: "Update existing count", modal: "edit" },
+                    { label: "Dispense blood", icon: "🚑", desc: "Log units going out", modal: "dispense" },
+                    { label: "Remove record", icon: "🗑️", desc: "Reset stock to zero", modal: "delete" },
                   ].map(a => (
                     <button key={a.label} onClick={() => this.openModal(a.modal)} style={{ padding: "1rem", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", textAlign: "left" }}>
                       <div style={{ fontSize: 22, marginBottom: 6 }}>{a.icon}</div>
@@ -441,7 +452,7 @@ class ManageDonors extends Component {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {stock.map(s => {
                 const st = getStatus(s.units_available, s.critical_threshold, s.low_threshold);
-                const c  = STATUS[st];
+                const c = STATUS[st];
                 return (
                   <div key={s.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #E2E8F0", padding: "1.25rem", display: "flex", alignItems: "center", gap: 16 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: c.text, flexShrink: 0 }}>{s.blood_group}</div>
@@ -466,14 +477,13 @@ class ManageDonors extends Component {
 
         {/* ── MODALS ── */}
 
-        {/* Add */}
         <Modal open={addModal} title="Add blood bag" onClose={() => this.setState({ addModal: false })}>
           <Select label="Blood group" options={bloodGroupOptions} value={form.blood_group_id} onChange={this.handleGroupChange} />
-          <Input label="Units to add" type="number" min="1" placeholder="e.g. 10" value={form.units} onChange={e => this.setState(prev => ({ form: { ...prev.form, units: e.target.value } }))} />
-          <Input label="Note (optional)" placeholder="Donor batch, source…" value={form.note} onChange={e => this.setState(prev => ({ form: { ...prev.form, note: e.target.value } }))} />
+          <Input label="Donor ID" placeholder="e.g. DNR-0231" value={form.donor_id} onChange={e => this.setState(prev => ({ form: { ...prev.form, donor_id: e.target.value } }))} />
+          <Input label="Date of donation" type="date" value={form.donation_date} onChange={e => this.setState(prev => ({ form: { ...prev.form, donation_date: e.target.value } }))} />
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
             <Btn variant="secondary" full onClick={() => this.setState({ addModal: false })}>Cancel</Btn>
-            <Btn full disabled={submitting} onClick={() => this.submit("/stock/add", { blood_group_id: form.blood_group_id, units: parseInt(form.units), note: form.note }, "Blood bag added successfully.", "addModal")}>
+            <Btn full disabled={submitting} onClick={() => this.submit("/stock/add", { blood_group_id: form.blood_group_id, donor_id: form.donor_id, donation_date: form.donation_date }, "Blood bag added successfully.", "addModal")}>
               {submitting ? "Saving…" : "Add record"}
             </Btn>
           </div>
@@ -531,7 +541,7 @@ class ManageDonors extends Component {
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
             {filteredStock.map(s => {
               const st = getStatus(s.units_available, s.critical_threshold, s.low_threshold);
-              const c  = STATUS[st];
+              const c = STATUS[st];
               return (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: c.bg, borderRadius: 8, border: `1px solid ${c.border}` }}>
                   <span style={{ fontWeight: 700, color: c.text }}>{s.blood_group}</span>
