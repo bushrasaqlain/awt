@@ -1170,7 +1170,62 @@ class RegisterDonor extends Component {
       errors: { ...prev.errors, cnic: "" },
     }));
   }
+  
+sendCardImage = async () => {
+  const cardElement = document.querySelector(".donor-card");
+  if (!cardElement) return;
 
+  const html2canvasModule = await import("html2canvas");
+  const canvas = await html2canvasModule.default(cardElement, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true,
+  });
+
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], `donor-card-${this.state.donorId}.png`, {
+      type: "image/png",
+    });
+
+    const shareData = {
+      files: [file],
+      title: "AWT Blood Bank - Donor Card",
+      text: `🩸 Aziz Welfare Trust - Blood Bank\nDonor ID: ${this.state.donorId}\nName: ${this.state.form.fullName}\nBlood Group: ${this.state.form.bloodGroup}`,
+    };
+
+    // Try native share (works on mobile, attaches actual image)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err.name === "AbortError") return; // user cancelled
+        console.error("Share failed, falling back:", err);
+      }
+    }
+
+    // Fallback for desktop: download image, then open WhatsApp Web with text
+    const link = document.createElement("a");
+    link.download = `donor-card-${this.state.donorId}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    alert("Image downloaded. Please attach it manually in WhatsApp.");
+
+    const message =
+      `🩸 *Aziz Welfare Trust - Blood Bank* 🩸\n\n` +
+      `*Donor ID:* ${this.state.donorId}\n` +
+      `*Name:* ${this.state.form.fullName}\n` +
+      `*Blood Group:* ${this.state.form.bloodGroup}\n` +
+      `Thank you for being a blood donor! ❤️`;
+
+    const phone = this.state.form.whatsapp.replace(/\D/g, "");
+    window.open(
+      `https://wa.me/92${phone}?text=${encodeURIComponent(message)}`,
+      "_blank",
+    );
+  }, "image/png");
+};
   formatWhatsApp(val) {
     const digits = val.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 4) return digits;
@@ -1532,24 +1587,9 @@ handleEmergencyPhone(e) {
                 📥 Download Card
               </button>
 
-              <button
-                className="btn btn-success px-4"
-                onClick={() => {
-                  const message =
-                    `🩸 *Aziz Welfare Trust - Blood Bank* 🩸\n\n` +
-                    `*Donor ID:* ${donorId}\n` +
-                    `*Name:* ${form.fullName}\n` +
-                    `*Blood Group:* ${form.bloodGroup}\n` +
-                    `*Valid Till:* ${validity}\n\n` +
-                    `Thank you for being a blood donor! ❤️`;
-
-                  const phone = form.whatsapp.replace(/\D/g, "");
-                  const url = `https://wa.me/92${phone}?text=${encodeURIComponent(message)}`;
-                  window.open(url, "_blank");
-                }}
-              >
-                📱 Send to WhatsApp
-              </button>
+             <button className="btn btn-success px-4" onClick={this.sendCardImage}>
+  📱 Send to WhatsApp
+</button>
             </div>
 
             <div className="mt-3 text-center">
