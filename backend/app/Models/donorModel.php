@@ -11,6 +11,7 @@ class DonorModel extends Model
     protected $returnType = 'array';
 
     protected $allowedFields = [
+        'user_id',  // <-- Add this to link to user table
         'full_name',
         'father_husband_name',
         'dob',
@@ -20,7 +21,6 @@ class DonorModel extends Model
         'cnic',
         'photo',
         'whatsapp',
-        'email',
         'address',
         'city',
         'donation_location',

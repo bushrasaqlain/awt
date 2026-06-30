@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateUserTable extends Migration
+class CreateCsrTable extends Migration
 {
     public function up()
     {
@@ -15,6 +15,11 @@ class CreateUserTable extends Migration
                 'unsigned'       => true,
                 'auto_increment' => true,
             ],
+            'user_id' => [
+                'type'       => 'INT',
+                'constraint' => 11,
+                'unsigned'   => true,
+            ],
             'name' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
@@ -22,42 +27,30 @@ class CreateUserTable extends Migration
             'email' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 150,
-                'unique'     => true,
             ],
             'password' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 255,
             ],
-          'accountType' => [
-    'type'       => 'ENUM',
-    'constraint' => ['admin', 'csr', 'donor'],
-    'default'    => 'donor',
-],
-// add this too:
-'created_by' => [
-    'type'     => 'INT',
-    'unsigned' => true,
-    'null'     => true,
-    'default'  => null,
-],
+            'plain_password' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 255,
+                'null'       => true,
+            ],
+            'phone' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 20,
+                'null'       => true,
+            ],
             'status' => [
                 'type'       => 'ENUM',
                 'constraint' => ['active', 'inactive'],
                 'default'    => 'active',
             ],
-            'phone' => [
-    'type'       => 'VARCHAR',
-    'constraint' => 20,
-    'null'       => true,
-],
-'blood_group' => [
-    'type'       => 'VARCHAR',
-    'constraint' => 10,
-    'null'       => true,
-],
-            'last_login' => [
-                'type' => 'DATETIME',
-                'null' => true,
+            'created_by' => [
+                'type'     => 'INT',
+                'unsigned' => true,
+                'null'     => true,
             ],
             'created_at' => [
                 'type' => 'DATETIME',
@@ -70,11 +63,16 @@ class CreateUserTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('user');
+
+        if ($this->db->tableExists('user')) {
+            $this->forge->addForeignKey('user_id', 'user', 'id', 'CASCADE', 'CASCADE');
+        }
+
+        $this->forge->createTable('csr', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('user');
+        $this->forge->dropTable('csr', true);
     }
 }

@@ -26,3 +26,12 @@ $routes->post('api/cities/import', 'Api\Cities::import');
 $routes->get('api/csr',            'Api\Csr::index');
 $routes->put('api/csr/(:num)',     'Api\Csr::update/$1');
 $routes->delete('api/csr/(:num)', 'Api\Csr::destroy/$1');
+
+$routes->get('api/stock',             'Api\Csr::stock');  
+$routes->post('api/stock/add',        'Api\Csr::add');
+$routes->post('api/stock/edit',       'Api\Csr::edit');
+$routes->post('api/stock/dispense',   'Api\Csr::dispense');
+$routes->post('api/stock/delete',     'Api\Csr::delete');
+$routes->post('api/stock/threshold',  'Api\Csr::threshold');
+$routes->get('api/stock/logs',        'Api\Csr::logs');
+$routes->get('api/stock/search',      'Api\Csr::search');

@@ -3,15 +3,16 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Models\userModel;
+use App\Models\UserModel;
+use App\Models\CsrModel;
 
 class Auth extends BaseController
 {
-    private userModel $userModel;
+    private UserModel $userModel;
 
     public function __construct()
     {
-        $this->userModel = new userModel();
+        $this->userModel = new UserModel();
 
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -108,23 +109,27 @@ class Auth extends BaseController
     {
         $json = $this->request->getJSON(true);
 
-        $name       = trim($json['name']        ?? '');
-        $email      = trim($json['email']       ?? '');
-        $password   = trim($json['password']    ?? '');
-        $phone      = trim($json['phone']       ?? '');
-        $bloodGroup = trim($json['blood_group'] ?? '');
+        $name     = trim($json['name']     ?? '');
+        $email    = trim($json['email']    ?? '');
+        $password = trim($json['password'] ?? '');
+        $phone    = trim($json['phone']    ?? '');
 
         $errors = [];
-        // Phone validation (optional field)
-if (!empty($phone)) {
-    $cleaned = str_replace('-', '', $phone);
-    $mobile   = preg_match('/^03[0-9]{9}$/', $cleaned);   // 0315-1863475
-    $landline = preg_match('/^0[1-9][1-9]\d{7}$/', $cleaned); // 051-3657894
 
-    if (!$mobile && !$landline) {
-        $errors['phone'] = 'Enter a valid Pakistani number (e.g. 051-3657894 or 0315-1863475).';
-    }
-}
+        // Phone validation (required for csr, optional otherwise)
+        if ($role === 'csr' && empty($phone)) {
+            $errors['phone'] = 'Phone is required for CSR accounts.';
+        }
+
+        if (!empty($phone)) {
+            $cleaned  = str_replace('-', '', $phone);
+            $mobile   = preg_match('/^03[0-9]{9}$/', $cleaned);
+            $landline = preg_match('/^0[1-9][1-9]\d{7}$/', $cleaned);
+
+            if (!$mobile && !$landline) {
+                $errors['phone'] = 'Enter a valid Pakistani number (e.g. 051-3657894 or 0315-1863475).';
+            }
+        }
 
         if (empty($name))                                   $errors['name']     = 'Name is required.';
         if (empty($email))                                  $errors['email']    = 'Email is required.';
@@ -144,35 +149,56 @@ if (!empty($phone)) {
             ]);
         }
 
-        $insertData = [
-            'name'        => $name,
-            'email'       => $email,
-            'password'    => password_hash($password, PASSWORD_BCRYPT),
-            'accountType' => $role,
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+        // ── Step 1: Always create the base user (login identity) ──
+        $userData = [
+            'name'           => $name,
+            'email'          => $email,
+            'password'       => $hashedPassword,
+            'plain_password' => $password,
+            'accountType'    => $role,
         ];
 
-        if (in_array($role, ['csr', 'donor'])) {
-            $insertData['phone'] = $phone;
-        }
-
-        if ($role === 'donor') {
-            $insertData['blood_group'] = $bloodGroup ?: null;
-        }
-
         if ($createdBy !== null) {
-            $insertData['created_by'] = $createdBy;
+            $userData['created_by'] = $createdBy;
         }
 
-        $id = $this->userModel->insert($insertData);
+        $userId = $this->userModel->insert($userData);
 
-        if (!$id) {
+        if (!$userId) {
             return $this->response->setStatusCode(500)->setJSON([
                 'status'  => false,
                 'message' => 'Registration failed. Please try again.',
             ]);
         }
 
-        $user = $this->userModel->find($id);
+        $user = $this->userModel->find($userId);
+
+        // ── Step 2: For CSR, create the linked profile row ──
+        if ($role === 'csr') {
+            $csrModel = new CsrModel();
+
+            $csrId = $csrModel->insert([
+                'user_id'        => $userId,
+                'name'           => $name,
+                'email'          => $email,
+                'password'       => $hashedPassword,
+                'plain_password' => $password,
+                'phone'          => $phone,
+                'created_by'     => $createdBy,
+            ]);
+
+            if (!$csrId) {
+                // Rollback the base user if the csr profile fails
+                $this->userModel->delete($userId);
+
+                return $this->response->setStatusCode(500)->setJSON([
+                    'status'  => false,
+                    'message' => 'Failed to create CSR profile.',
+                ]);
+            }
+        }
 
         if ($role === 'donor') {
             $_SESSION['awt_user'] = [
@@ -197,7 +223,7 @@ if (!empty($phone)) {
                 'id'    => $user['id'],
                 'name'  => $user['name'],
                 'email' => $user['email'],
-                'role'  => $user['accountType'],  // ✅ fixed
+                'role'  => $user['accountType'],
             ],
         ]);
     }
