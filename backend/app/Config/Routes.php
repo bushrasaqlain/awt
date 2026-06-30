@@ -36,3 +36,12 @@ $routes->post('api/stock/threshold',  'Api\Csr::threshold');
 $routes->get('api/stock/logs',        'Api\Csr::logs');
 $routes->get('api/stock/search',      'Api\Csr::search');
 $routes->get('api/admin/dashboard', 'Api\Dashboard::index');
+$routes->get('api/donors', 'Api\Donors::index');
+
+    $routes->post('donors/register', 'Api\Donors::register');
+    $routes->get('donors', 'Api\Donors::index');
+    $routes->get('donors/(:num)', 'Api\Donors::show/$1');
+    $routes->put('donors/(:num)', 'Api\Donors::update/$1');
+    $routes->post('donors/(:num)', 'Api\Donors::update/$1'); // fallback for multipart PUT (PHP/CI4 quirk)
+    $routes->patch('donors/(:num)/status', 'Api\Donors::updateStatus/$1');
+    $routes->get('donors/(:num)/history', 'Api\Donors::history/$1');

@@ -31,10 +31,7 @@ class CreateDonorsTable extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
             ],
-            'father_husband_name' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 100,
-            ],
+           
             'dob' => [
                 'type' => 'DATE',
                 'null' => true,
@@ -84,14 +81,7 @@ class CreateDonorsTable extends Migration
                 'type'       => 'ENUM',
                 'constraint' => ['Blood Camp', 'Blood Bank', 'Both'],
             ],
-            'available_days' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 100,
-            ],
-            'time_slot' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 60,
-            ],
+           
             'emergency_name' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
@@ -104,10 +94,7 @@ class CreateDonorsTable extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 20,
             ],
-            'signature' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 100,
-            ],
+           
             'status' => [
                 'type'       => 'ENUM',
                 'constraint' => ['pending', 'approved', 'rejected'],

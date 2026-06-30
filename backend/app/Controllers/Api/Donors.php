@@ -215,4 +215,13 @@ class Donors extends BaseController
             ]);
         }
     }
+    public function index(): \CodeIgniter\HTTP\ResponseInterface
+{
+    $donors = $this->donorModel->findAll();
+
+    return $this->response->setStatusCode(200)->setJSON([
+        'status' => true,
+        'data'   => $donors,
+    ]);
+}
 }
