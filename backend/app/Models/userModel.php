@@ -11,24 +11,19 @@ class UserModel extends Model
     protected $returnType = 'array';
 
     protected $allowedFields = [
-    'name',
-    'email',
-    'password',
-    'accountType',   
-    'status',
-    'last_login',
-    'created_by',    
-];
-
-
-
-
+        'name',
+        'email',
+        'password',
+        'plain_password',
+        'accountType',
+        'status',
+        'last_login',
+        'created_by',
+    ];
 
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-
-    // ── Helpers ──────────────────────────────────────────────
 
     public function findByEmail(string $email): ?array
     {
@@ -40,8 +35,8 @@ class UserModel extends Model
         $this->update($id, ['last_login' => date('Y-m-d H:i:s')]);
     }
 
-    public function isActive(array $donor): bool
+    public function isActive(array $user): bool
     {
-        return $donor['status'] === 'active';
+        return $user['status'] === 'active';
     }
 }

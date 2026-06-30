@@ -8,6 +8,7 @@ import Register from "./components/accounts/register";
 import AdminDashboard from "./components/dbadmin/dashboard-area";
 import Cities from "./components/dbadmin/city";
 import Management from "./components/dbadmin/manager";
+import ManageDonors from "./components/donormanagement/dashboard";
 
 function Home() {
   return (
@@ -28,7 +29,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin/dashboard-area" element={<AdminDashboard />} />
         <Route path="/admin/city" element={<Cities />} />
-        <Route path="/admin/manager"           element={<Management />} />
+        <Route path="/admin/manager" element={<Management />} />
+        <Route path="/csr/dashboard" element={<ManageDonors />} />
       </Routes>
     </BrowserRouter>
   );

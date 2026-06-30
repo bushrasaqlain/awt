@@ -1409,13 +1409,10 @@ handleEmergencyPhone(e) {
     formData.append("timeSlot", timeSlot);
 
     try {
-      const res = await fetch(
-        "http://localhost:8080/awt/backend/public/api/donors/register",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      const res = await fetch("http://localhost/awt/backend/public/api/donors/register", {
+        method: "POST",
+        body: formData
+      });
 
       if (res.ok) {
         const donorId = generateDonorId();
