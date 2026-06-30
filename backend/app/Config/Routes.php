@@ -35,3 +35,4 @@ $routes->post('api/stock/delete',     'Api\Csr::delete');
 $routes->post('api/stock/threshold',  'Api\Csr::threshold');
 $routes->get('api/stock/logs',        'Api\Csr::logs');
 $routes->get('api/stock/search',      'Api\Csr::search');
+$routes->get('api/admin/dashboard', 'Api\Dashboard::index');
