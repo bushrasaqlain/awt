@@ -14,22 +14,58 @@ function withNavigate(WrappedComponent) {
 class DefaultHeader2 extends Component {
   constructor(props) {
     super(props);
-    this.state = { menuOpen: false };
+    this.state = {
+      menuOpen: false,
+      user: this.getStoredUser(),
+      checkedSession: false,
+    };
     this.handleLogout = this.handleLogout.bind(this);
     this.toggleMenu  = this.toggleMenu.bind(this);
     this.closeMenu   = this.closeMenu.bind(this);
   }
 
-  getUser() {
+  componentDidMount() {
+    this.verifySession();
+  }
+
+  getStoredUser() {
     try { return JSON.parse(localStorage.getItem("awt_user")) || null; }
     catch { return null; }
   }
 
+  async verifySession() {
+    try {
+      const res  = await fetch("/api/auth/me");
+      const data = await res.json();
+
+      if (res.ok && data.status && data.user) {
+        // Server confirms an active session — sync localStorage + state
+        localStorage.setItem("awt_user", JSON.stringify(data.user));
+        this.setState({ user: data.user, checkedSession: true });
+      } else {
+        // No active server session — clear stale local data
+        localStorage.removeItem("awt_user");
+        localStorage.removeItem("awt_token");
+        this.setState({ user: null, checkedSession: true });
+      }
+    } catch {
+      // Network/server error — fail safe by trusting nothing extra,
+      // but don't forcibly log the user out on a transient failure
+      this.setState({ checkedSession: true });
+    }
+  }
+
   async handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    localStorage.removeItem("awt_user");
-    localStorage.removeItem("awt_token");
-    this.props.navigate("/login");
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      localStorage.removeItem("awt_user");
+      localStorage.removeItem("awt_token");
+      this.setState({ user: null });
+      this.props.navigate("/login");
+    }
   }
 
   toggleMenu() { this.setState(p => ({ menuOpen: !p.menuOpen })); }
@@ -70,7 +106,6 @@ class DefaultHeader2 extends Component {
         {this.navLink("/admin/manager",           "Management")}
         {this.navLink("/admin/donors",         "Donor Management")}
         {this.navLink("/admin/city",           "City")}
-        {this.navLink("/admin/settings",       "Settings")}
       </>
     );
   }
@@ -85,10 +120,13 @@ class DefaultHeader2 extends Component {
   }
 
   render() {
-    const user = this.getUser();
+    const { menuOpen, user, checkedSession } = this.state;
     const role = user?.role;
-    const { menuOpen } = this.state;
     const isLoggedIn = !!role;
+
+    // Optional: avoid flashing "logged out" UI for a split second
+    // while the session check is in flight, if you'd rather show a blank/spinner state
+    // if (!checkedSession) return null;
 
     return (
       <>
@@ -107,18 +145,15 @@ class DefaultHeader2 extends Component {
             height: 70,
           }}>
 
-            {/* Logo */}
             <Link to="/" onClick={this.closeMenu} style={{ flexShrink: 0 }}>
               <img src="/images/logo.png" height={54} alt="AWT Logo" />
             </Link>
 
-            {/* Desktop tabs */}
             <div className="d-none d-lg-flex" style={{ marginLeft: 24, gap: 4, flex: 1 }}>
               {role === "admin" && this.renderAdminTabs()}
               {role === "csr"   && this.renderCsrTabs()}
             </div>
 
-            {/* Right side — desktop */}
             <div className="d-none d-lg-flex ms-auto align-items-center" style={{ gap: 12 }}>
               {isLoggedIn ? (
                 <>
@@ -170,7 +205,6 @@ class DefaultHeader2 extends Component {
               )}
             </div>
 
-            {/* Hamburger — mobile */}
             <button
               className="d-lg-none ms-auto"
               onClick={this.toggleMenu}
@@ -195,7 +229,6 @@ class DefaultHeader2 extends Component {
             </button>
           </div>
 
-          {/* Mobile dropdown */}
           <div style={{
             maxHeight: menuOpen ? 400 : 0,
             overflow: "hidden",
