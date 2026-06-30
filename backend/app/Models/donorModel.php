@@ -18,6 +18,7 @@ class DonorModel extends Model
         'age',
         'gender',
         'blood_group',
+        'weight',   
         'cnic',
         'photo',
         'whatsapp',

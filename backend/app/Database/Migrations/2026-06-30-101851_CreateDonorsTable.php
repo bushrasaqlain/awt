@@ -11,7 +11,7 @@ class CreateDonorsTable extends Migration
         // Check if table exists before creating
         if ($this->db->tableExists('donors')) {
             echo "Table 'donors' already exists. Dropping it...\n";
-            $this->forge->dropTable('donors', true);
+            $this->forge->dropTable('donors', true, true); // Added CASCADE
         }
 
         $this->forge->addField([
@@ -53,6 +53,11 @@ class CreateDonorsTable extends Migration
                 'type'       => 'ENUM',
                 'constraint' => ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'],
             ],
+            'weight' => [
+                'type'       => 'DECIMAL',
+                'constraint' => '5,2',
+                'null'       => false,
+            ],
             'cnic' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 15,
@@ -71,8 +76,9 @@ class CreateDonorsTable extends Migration
                 'type' => 'TEXT',
             ],
             'city' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 60,
+                'type'       => 'INT',
+                'constraint' => 11,
+                'unsigned'   => true,
             ],
             'donation_location' => [
                 'type'       => 'ENUM',
@@ -118,20 +124,27 @@ class CreateDonorsTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        
-        // Only add foreign key if the user table exists
+
+        // Check if user table exists before adding foreign key
         if ($this->db->tableExists('user')) {
             $this->forge->addForeignKey('user_id', 'user', 'id', 'CASCADE', 'CASCADE');
         } else {
             echo "Warning: 'user' table does not exist. Foreign key skipped.\n";
         }
+
+        // Check if cities table exists before adding foreign key
+        if ($this->db->tableExists('cities')) {
+            $this->forge->addForeignKey('city', 'cities', 'id', 'CASCADE', 'CASCADE');
+        } else {
+            echo "Warning: 'cities' table does not exist. Foreign key skipped.\n";
+        }
         
-        $this->forge->createTable('donors', true); // true = IF NOT EXISTS
+        $this->forge->createTable('donors', true);
         echo "Donors table created successfully!\n";
     }
 
     public function down()
     {
-        $this->forge->dropTable('donors', true);
+        $this->forge->dropTable('donors', true, true); // Added CASCADE
     }
 }

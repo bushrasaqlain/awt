@@ -120,6 +120,24 @@ class Auth extends BaseController
         if ($role === 'csr' && empty($phone)) {
             $errors['phone'] = 'Phone is required for CSR accounts.';
         }
+         if (empty($name)) {
+            $errors['name'] = 'Name is required.';
+        }
+
+        // Email validation
+        if (empty($email)) {
+            $errors['email'] = 'Email is required.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Enter a valid email.';
+        }
+
+        // Password validation - FIXED: Password is now required and validated properly
+        if (empty($password)) {
+            $errors['password'] = 'Password is required.';
+        } elseif (strlen($password) < 8) { // Changed to 8 characters to match frontend validation
+            $errors['password'] = 'Password must be at least 8 characters.';
+        }
+
 
         if (!empty($phone)) {
             $cleaned  = str_replace('-', '', $phone);
@@ -131,12 +149,7 @@ class Auth extends BaseController
             }
         }
 
-        if (empty($name))                                   $errors['name']     = 'Name is required.';
-        if (empty($email))                                  $errors['email']    = 'Email is required.';
-        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email']    = 'Enter a valid email.';
-        if (empty($password))                               $errors['password'] = 'Password is required.';
-        elseif (strlen($password) < 6)                      $errors['password'] = 'Password must be at least 6 characters.';
-
+        // Check if email already exists
         if (empty($errors['email']) && $this->userModel->findByEmail($email)) {
             $errors['email'] = 'This email is already registered.';
         }
