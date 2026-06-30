@@ -32,7 +32,7 @@ const Footer = () => {
             />
 
             <p>
-              Aziz Welfare Trust Blood Bank Management System.
+              AWT Blood Bank Blood Bank Management System.
               Connecting donors with patients and saving lives.
             </p>
 
@@ -116,7 +116,7 @@ const Footer = () => {
           padding: "15px",
         }}
       >
-        © {new Date().getFullYear()} Aziz Welfare Trust. All Rights Reserved.
+        © {new Date().getFullYear()} AWT Blood Bank. All Rights Reserved.
       </div>
     </footer>
   );

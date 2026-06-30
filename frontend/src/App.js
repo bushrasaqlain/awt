@@ -14,7 +14,7 @@ function Home() {
   return (
     
     <div className="container text-center py-5 mt-5">
-      <h1>Welcome to Aziz Welfare Trust</h1>
+      <h1>Welcome to AWT Blood Bank</h1>
     </div>
   );
 }

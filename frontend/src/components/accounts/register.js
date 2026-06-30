@@ -269,7 +269,7 @@ class DonorCard extends Component {
                 AWT Blood Bank
               </h2>
               <p style={{ margin: 0, fontSize: "12px", color: "#888" }}>
-                A Project of Aziz Welfare Trust
+                A Project of AWT Blood Bank
               </p>
             </div>
           </div>
@@ -1005,7 +1005,7 @@ class StepConsent extends Component {
               onChange={onChange}
             />
             <label className="form-check-label" htmlFor="declarationConsent">
-              I consent to Aziz Welfare Trust storing my personal data for blood
+              I consent to AWT Blood Bank storing my personal data for blood
               donation purposes.
             </label>
           </div>
@@ -1190,7 +1190,7 @@ sendCardImage = async () => {
     const shareData = {
       files: [file],
       title: "AWT Blood Bank - Donor Card",
-      text: `🩸 Aziz Welfare Trust - Blood Bank\nDonor ID: ${this.state.donorId}\nName: ${this.state.form.fullName}\nBlood Group: ${this.state.form.bloodGroup}`,
+      text: `🩸 AWT Blood Bank\nDonor ID: ${this.state.donorId}\nName: ${this.state.form.fullName}\nBlood Group: ${this.state.form.bloodGroup}`,
     };
 
     // Try native share (works on mobile, attaches actual image)
@@ -1213,7 +1213,7 @@ sendCardImage = async () => {
     alert("Image downloaded. Please attach it manually in WhatsApp.");
 
     const message =
-      `🩸 *Aziz Welfare Trust - Blood Bank* 🩸\n\n` +
+      `🩸 *AWT Blood Bank - Blood Bank* 🩸\n\n` +
       `*Donor ID:* ${this.state.donorId}\n` +
       `*Name:* ${this.state.form.fullName}\n` +
       `*Blood Group:* ${this.state.form.bloodGroup}\n` +
@@ -1615,7 +1615,7 @@ handleEmergencyPhone(e) {
               <div>
                 <h4 className="fw-bold mb-1">Donor Registration</h4>
                 <p className="mb-0 opacity-75 small">
-                  Aziz Welfare Trust — Blood Bank
+                  AWT Blood Bank
                 </p>
               </div>
             </div>
