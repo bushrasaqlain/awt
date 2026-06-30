@@ -684,18 +684,18 @@ class StepPersonal extends Component {
                 step="0.1"
               />
               <div className="form-text text-muted">
-                Minimum weight requirement: <strong>45–50 kg (110 lbs)</strong>{" "}
-                for blood donation. You must weigh between 45-50 kg to be
+                Minimum weight requirement: <strong>45–160 kg</strong>{" "}
+                for blood donation. You must weigh between 45-160 kg to be
                 eligible.
               </div>
               {form.weight && !errors.weight && (
                 <div
-                  className={`mt-1 small ${parseFloat(form.weight) >= 45 && parseFloat(form.weight) <= 50 ? "text-success" : "text-danger"}`}
+                  className={`mt-1 small ${parseFloat(form.weight) >= 45 && parseFloat(form.weight) <= 160 ? "text-success" : "text-danger"}`}
                 >
                   {parseFloat(form.weight) >= 45 &&
-                  parseFloat(form.weight) <= 50
+                  parseFloat(form.weight) <= 160
                     ? "✓ Eligible - Your weight meets the donation requirement"
-                    : "✗ Not eligible - Weight must be between 45-50 kg"}
+                    : "✗ Not eligible - Weight must be between 45-160 kg"}
                 </div>
               )}
             </Field>
@@ -1074,7 +1074,7 @@ class RegisterDonor extends Component {
     });
   }
   componentDidMount() {
-    fetch("http://localhost:8080/awt/backend/public/api/cities")
+    fetch("http://localhost/awt/backend/public/api/cities")
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
@@ -1136,7 +1136,7 @@ class RegisterDonor extends Component {
     if (dob > maxDob) {
       this.setState((prev) => ({
         form: { ...prev.form, dob, age: "" },
-        errors: { ...prev.errors, dob: "Donor must be at least 15 years old." },
+        errors: { ...prev.errors, dob: "Donor must be at least 18 years old." },
       }));
       return;
     }
@@ -1290,9 +1290,9 @@ handleEmergencyPhone(e) {
         const weightNum = parseFloat(form.weight);
         if (isNaN(weightNum) || weightNum <= 0) {
           errs.weight = "Please enter a valid weight in kg.";
-        } else if (weightNum < 45 || weightNum > 50) {
+        } else if (weightNum < 45 || weightNum > 160) {
           errs.weight =
-            "You must weigh between 45-50 kg (110 lbs) to donate blood.";
+            "You must weigh between 45-160 kg (110-352 lbs) to donate blood.";
         }
       }
 

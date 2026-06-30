@@ -11,7 +11,7 @@ class DonorModel extends Model
     protected $returnType = 'array';
 
     protected $allowedFields = [
-        'user_id',  // <-- Add this to link to user table
+        'user_id', 
         'full_name',
         'father_husband_name',
         'dob',

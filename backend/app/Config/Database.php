@@ -29,7 +29,7 @@ class Database extends Config
         'hostname'     => 'localhost',
         'username'     => 'root',
         'password'     => '',
-        'database'     => 'bloodbank',
+        'database'     => 'awt',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -104,7 +104,7 @@ class Database extends Config
     //     * Sample database connection for SQLSRV.
     //     *
     //     * @var array<string, mixed>
-    //     */
+    //     */d
     //    public array $default = [
     //        'DSN'        => '',
     //        'hostname'   => 'localhost',

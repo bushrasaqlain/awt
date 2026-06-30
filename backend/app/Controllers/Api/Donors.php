@@ -82,8 +82,8 @@ class Donors extends BaseController
             if (empty($bloodGroup))        $errors['bloodGroup']        = 'Blood group is required.';
             if (empty($weight)) {
                 $errors['weight'] = 'Weight is required.';
-            } elseif (!is_numeric($weight) || $weight < 45 || $weight > 50) {
-                $errors['weight'] = 'Weight must be between 45-50 kg.';
+            } elseif (!is_numeric($weight) || $weight < 45 || $weight > 160) {
+                $errors['weight'] = 'Weight must be between 45-160 kg.';
             }
             if (empty($whatsapp))          $errors['whatsapp']          = 'WhatsApp number is required.';
             if (empty($address))           $errors['address']           = 'Address is required.';
