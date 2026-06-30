@@ -78,7 +78,7 @@ class DefaultHeader2 extends Component {
   renderCsrTabs() {
     return (
       <>
-        {this.navLink("/csr/donors",         "Manage Donors")}
+        {this.navLink("/csr/dashboard",         "Manage Donors")}
         {this.navLink("/csr/blood-requests", "Blood Requests")}
       </>
     );

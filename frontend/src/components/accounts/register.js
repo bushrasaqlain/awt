@@ -705,7 +705,7 @@ class RegisterDonor extends Component {
     formData.append("timeSlot", timeSlot);
 
     try {
-      const res = await fetch("http://localhost:8080/awt/backend/public/api/donors/register", {
+      const res = await fetch("http://localhost/awt/backend/public/api/donors/register", {
         method: "POST",
         body: formData
       });
