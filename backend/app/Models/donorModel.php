@@ -13,7 +13,6 @@ class DonorModel extends Model
     protected $allowedFields = [
         'user_id',  // <-- Add this to link to user table
         'full_name',
-        'father_husband_name',
         'dob',
         'age',
         'gender',
@@ -25,12 +24,9 @@ class DonorModel extends Model
         'address',
         'city',
         'donation_location',
-        'available_days',
-        'time_slot',
         'emergency_name',
         'emergency_relation',
         'emergency_phone',
-        'signature',
         'status',
     ];
 
