@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+
 function withNavigate(WrappedComponent) {
   return function(props) {
     const navigate = useNavigate();
@@ -115,7 +116,7 @@ class DefaultHeader2 extends Component {
       <>
         {this.navLink("/csr/dashboard",         "Manage Donors")}
         {this.navLink("/csr/donorlist",         "Donors List")}
-        {this.navLink("/csr/blood-requests", "Blood Requests")}
+        {this.navLink("/csr/donationcollection", "Collected Donations")}
       </>
     );
   }

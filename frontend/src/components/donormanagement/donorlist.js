@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-const API_BASE = "http://localhost:8080/awt/backend/public/api";
+const API_BASE = "http://localhost/awt/backend/public/api";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"];
 const GENDERS = ["Male", "Female", "Other"];
