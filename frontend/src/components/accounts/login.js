@@ -48,7 +48,7 @@ class Login extends Component {
     this.setState({ loading: true, serverError: "" });
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("http://localhost:8080/awt/backend/public/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -98,7 +98,7 @@ class Login extends Component {
             >
               🩸
             </div>
-            <h4 className="text-white fw-bold mb-1">AWT Blood Bank</h4>
+            <h4 className="text-white fw-bold mb-1">Aziz Welfare Trust</h4>
             <p className="text-white-50 small mb-0">Blood Bank Management System</p>
           </div>
 

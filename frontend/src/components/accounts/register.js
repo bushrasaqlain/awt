@@ -164,8 +164,6 @@ function validateFaceImage(file) {
   });
 }
 
-/* ── Donor Card Component ── */
-
 class DonorCard extends Component {
   constructor(props) {
     super(props);
@@ -244,7 +242,7 @@ class DonorCard extends Component {
                 AWT Blood Bank
               </h2>
               <p style={{ margin: 0, fontSize: "12px", color: "#888" }}>
-                A Project of AWT Blood Bank
+                A Project of AWT Blood Bank A Project of AWT Blood Bank
               </p>
             </div>
           </div>
@@ -601,15 +599,15 @@ class StepPersonal extends Component {
             </Field>
           </div>
           <div className="col-md-6">
-           <Field label="Age (auto-calculated)">
-  <input
-    type="text"
-    className="form-control bg-light"
-    value={form.age || ""}
-    readOnly
-    placeholder="Auto-filled from DOB"
-  />
-</Field>
+            <Field label="Age (auto-calculated)">
+              <input
+                type="text"
+                className="form-control bg-light"
+                value={form.age || ""}
+                readOnly
+                placeholder="Auto-filled from DOB"
+              />
+            </Field>
           </div>
 
           <div className="col-md-6">
@@ -663,6 +661,7 @@ class StepPersonal extends Component {
               {form.weight && !errors.weight && (
                 <div
                   className={`mt-1 small ${parseFloat(form.weight) >= 45 && parseFloat(form.weight) <= 160 ? "text-success" : "text-danger"}`}
+                  className={`mt-1 small ${parseFloat(form.weight) >= 45 && parseFloat(form.weight) <= 160 ? "text-success" : "text-danger"}`}
                 >
                   {parseFloat(form.weight) >= 45 &&
                   parseFloat(form.weight) <= 160
@@ -672,8 +671,6 @@ class StepPersonal extends Component {
               )}
             </Field>
           </div>
-
-          
         </div>
       </div>
     );
@@ -695,7 +692,7 @@ class StepContact extends Component {
                 name="whatsapp"
                 value={form.whatsapp}
                 onChange={onWhatsApp}
-                placeholder="0313-5495655"
+                placeholder="XXXX-XXXXXXX"
                 maxLength={12}
               />
             </Field>
@@ -811,7 +808,7 @@ class StepPreferences extends Component {
                 name="emergencyPhone"
                 value={form.emergencyPhone}
                 onChange={onEmergencyPhone}
-                placeholder="0300-1234567"
+                placeholder="XXXX-XXXXXXX"
                 maxLength={12}
               />
             </Field>
@@ -864,7 +861,7 @@ class RegisterDonor extends Component {
     });
   }
   componentDidMount() {
-    fetch("http://localhost/awt/backend/public/api/cities")
+    fetch("http://localhost:8080/awt/backend/public/api/cities")
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
@@ -927,6 +924,7 @@ class RegisterDonor extends Component {
       this.setState((prev) => ({
         form: { ...prev.form, dob, age: "" },
         errors: { ...prev.errors, dob: "Donor must be at least 18 years old." },
+        errors: { ...prev.errors, dob: "Donor must be at least 18 years old." },
       }));
       return;
     }
@@ -940,7 +938,10 @@ class RegisterDonor extends Component {
     }
 
     const { years, months } = calcAge(dob);
-    const ageDisplay = `${years} year${years !== 1 ? "s" : ""} ${months} month${months !== 1 ? "s" : ""}`;
+    const ageDisplay =
+      months === 0
+        ? `${years} year${years !== 1 ? "s" : ""}`
+        : `${years} year${years !== 1 ? "s" : ""} ${months} month${months !== 1 ? "s" : ""}`;
 
     this.setState((prev) => ({
       form: { ...prev.form, dob, age: ageDisplay, ageYears: years },
@@ -1051,7 +1052,7 @@ class RegisterDonor extends Component {
     const maxDob = getMaxDob();
     const minDob = getMinDob();
 
-    if (s === 1) {
+    if (s === 1 || s === "all") {
       if (!form.photo) errs.photo = "Face photo is required.";
 
       if (!form.fullName.trim()) errs.fullName = "Full name is required.";
@@ -1089,7 +1090,7 @@ class RegisterDonor extends Component {
         errs.cnic = "CNIC must be 13 digits (e.g. 37106-8234782-3).";
     }
 
-    if (s === 2) {
+    if (s === 2 || s === "all") {
       const waDigits = form.whatsapp.replace(/\D/g, "");
       if (!form.whatsapp.trim()) errs.whatsapp = "WhatsApp number is required.";
       else if (waDigits.length !== 11)
@@ -1134,28 +1135,49 @@ if (s === 3) {
   }
 
   prevStep() {
+    this.setState({ errors: {} });
+    this.setState((prev) => ({ step: prev.step - 1 }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  prevStep() {
     this.setState((prev) => ({ errors: {}, step: prev.step - 1 }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async handleSubmit(e) {
     e.preventDefault();
-    const errs = this.validate(5);
+    const errs = this.validate("all");
     if (Object.keys(errs).length > 0) {
-      this.setState({ errors: errs });
+      // figure out which step to show based on the first error
+      const step1Fields = [
+        "photo",
+        "fullName",
+        "dob",
+        "gender",
+        "bloodGroup",
+        "weight",
+        "cnic",
+      ];
+      const step2Fields = ["whatsapp", "email", "address", "city"];
+      let targetStep = 3;
+      if (Object.keys(errs).some((f) => step1Fields.includes(f)))
+        targetStep = 1;
+      else if (Object.keys(errs).some((f) => step2Fields.includes(f)))
+        targetStep = 2;
+
+      this.setState({ errors: errs, step: targetStep });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
     const { form } = this.state;
     const formData = new FormData();
-    const timeSlot = `${form.preferredTimeFrom} – ${form.preferredTimeTo}`;
 
     Object.entries(form).forEach(([k, v]) => {
       if (k === "photo" && v) formData.append(k, v);
       else if (k !== "photo") formData.append(k, v);
     });
-
-    formData.append("timeSlot", timeSlot);
 
     try {
       const res = await fetch(
@@ -1167,11 +1189,11 @@ if (s === 3) {
       );
 
       if (res.ok) {
-        const donorId = generateDonorId();
+        const resData = await res.json();
         this.setState({
           submitted: true,
           showCard: true,
-          donorId: donorId,
+          donorId: resData.data.donor_id,
         });
       } else {
         const errorData = await res.json();
@@ -1279,33 +1301,35 @@ if (s === 3) {
     }
   }
 
- render() {
-  const { submitted, step, form, donorId, showCard } = this.state;
+  render() {
+    const { submitted, step, form, donorId, showCard } = this.state;
 
-  if (submitted) {
-    return (
-      <div className="min-vh-100 pt-5 mt-3 bg-light d-flex align-items-center justify-content-center py-5">
-        <div
-          className="card shadow-sm border-0 text-center p-5"
-          style={{ maxWidth: 480, width: "100%" }}
-        >
-          <div style={{ fontSize: 56 }}>✅</div>
-          <h3 className="fw-bold text-success mt-3">Registration Successful!</h3>
-          <p className="text-muted mt-2">
-            Thank you, <strong>{form.fullName}</strong>, for registering as a
-            blood donor with AWT Blood Bank. Our team will review your
-            information shortly.
-          </p>
-          <button
-            className="btn btn-outline-secondary mt-3"
-            onClick={this.resetForm}
+    if (submitted) {
+      return (
+        <div className="min-vh-100 pt-5 mt-3 bg-light d-flex align-items-center justify-content-center py-5">
+          <div
+            className="card shadow-sm border-0 text-center p-5"
+            style={{ maxWidth: 480, width: "100%" }}
           >
-            Register Another Donor
-          </button>
+            <div style={{ fontSize: 56 }}>✅</div>
+            <h3 className="fw-bold text-success mt-3">
+              Registration Successful!
+            </h3>
+            <p className="text-muted mt-2">
+              Thank you, <strong>{form.fullName}</strong>, for registering as a
+              blood donor with AWT Blood Bank. Our team will review your
+              information shortly.
+            </p>
+            <button
+              className="btn btn-outline-secondary mt-3"
+              onClick={this.resetForm}
+            >
+              Register Another Donor
+            </button>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
     return (
       <div className="min-vh-100 pt-5 mt-4 bg-light">

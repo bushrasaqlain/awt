@@ -10,8 +10,7 @@ import Cities from "./components/dbadmin/city";
 import Management from "./components/dbadmin/manager";
 import ManageDonors from "./components/donormanagement/dashboard";
 import DonorManagement from "./components/dbadmin/donors";
-import BloodDonations from "./components/donormanagement/donationcollection"
-
+import DonorList from "./components/donormanagement/donorlist"
 function Home() {
   return (
     
@@ -29,12 +28,13 @@ function App() {
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/csr/donorlist" element={<DonorList />} />
         <Route path="/admin/dashboard-area" element={<AdminDashboard />} />
         <Route path="/admin/city" element={<Cities />} />
         <Route path="/admin/manager" element={<Management />} />
         <Route path="/admin/donors" element={<DonorManagement />} />
         <Route path="/csr/dashboard" element={<ManageDonors />} />
-        <Route path="/csr/donationcollection" element={<BloodDonations />} />
+          <Route path="/csr/donorlist" element={<DonorList />} />
       </Routes>
     </BrowserRouter>
   );

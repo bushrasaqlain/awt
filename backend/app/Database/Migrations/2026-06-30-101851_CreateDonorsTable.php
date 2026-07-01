@@ -27,11 +27,16 @@ class CreateDonorsTable extends Migration
                 'unsigned'   => true,
                 'null'       => true,
             ],
+            'donor_id' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 20,
+                'unique'     => true,
+            ],
             'full_name' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
             ],
-           
+
             'dob' => [
                 'type' => 'DATE',
                 'null' => true,
@@ -81,7 +86,7 @@ class CreateDonorsTable extends Migration
                 'type'       => 'ENUM',
                 'constraint' => ['Blood Camp', 'Blood Bank', 'Both'],
             ],
-           
+
             'emergency_name' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
@@ -94,7 +99,7 @@ class CreateDonorsTable extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 20,
             ],
-           
+
             'status' => [
                 'type'       => 'ENUM',
                 'constraint' => ['pending', 'approved', 'rejected'],
@@ -125,7 +130,7 @@ class CreateDonorsTable extends Migration
         } else {
             echo "Warning: 'cities' table does not exist. Foreign key skipped.\n";
         }
-        
+
         $this->forge->createTable('donors', true);
         echo "Donors table created successfully!\n";
     }
