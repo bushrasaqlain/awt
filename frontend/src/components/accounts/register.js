@@ -27,7 +27,7 @@ const RELATIONS = [
   "Other",
 ];
 
-const STEP_LABELS = ["Personal", "Contact", "Preferences", "Emergency"];
+const STEP_LABELS = ["Personal", "Contact", "Preferences"];
 
 const INITIAL_FORM = {
   email: "",
@@ -751,7 +751,7 @@ class StepContact extends Component {
 /* ── Step 3: Donation Preferences ── */
 class StepPreferences extends Component {
   render() {
-    const { form, errors, onChange } = this.props;
+     const { form, errors, onChange, onEmergencyPhone } = this.props;
     return (
       <div>
         <SectionTitle icon="🩸" title="Donation Preferences" />
@@ -776,18 +776,7 @@ class StepPreferences extends Component {
             ))}
           </div>
         </Field>
-      </div>
-    );
-  }
-}
 
-/* ── Step 4: Emergency Contact ── */
-class StepEmergency extends Component {
-  render() {
-    const { form, errors, onChange, onEmergencyPhone } = this.props;
-    return (
-      <div>
-        <SectionTitle icon="🚨" title="Emergency Contact" />
         <div className="row g-3">
           <div className="col-12">
             <Field label="Full Name *" error={errors.emergencyName}>
@@ -833,7 +822,8 @@ class StepEmergency extends Component {
   }
 }
 
-/* ── Step 5: Declaration & Consent ── */
+
+
 
 /* ── Main Component ── */
 class RegisterDonor extends Component {
@@ -849,7 +839,7 @@ class RegisterDonor extends Component {
       showCard: false,
       cities: [],
     };
-    this.totalSteps = 4;
+    this.totalSteps = 3;
 
     this.handleChange = this.handleChange.bind(this);
     this.handlePhoto = this.handlePhoto.bind(this);
@@ -1113,25 +1103,23 @@ class RegisterDonor extends Component {
       if (!form.city) errs.city = "Select a city.";
     }
 
-    if (s === 3) {
-      if (!form.donationLocation)
-        errs.donationLocation = "Select donation preference.";
-    }
+if (s === 3) {
+  if (!form.donationLocation)
+    errs.donationLocation = "Select donation preference.";
 
-    if (s === 4) {
-      if (!form.emergencyName.trim()) errs.emergencyName = "Name is required.";
-      else if (/\d/.test(form.emergencyName))
-        errs.emergencyName = "Name must not contain numbers.";
+  if (!form.emergencyName.trim()) errs.emergencyName = "Name is required.";
+  else if (/\d/.test(form.emergencyName))
+    errs.emergencyName = "Name must not contain numbers.";
 
-      if (!form.emergencyRelation.trim())
-        errs.emergencyRelation = "Relationship is required.";
+  if (!form.emergencyRelation.trim())
+    errs.emergencyRelation = "Relationship is required.";
 
-      const emergDigits = form.emergencyPhone.replace(/\D/g, "");
-      if (!form.emergencyPhone.trim())
-        errs.emergencyPhone = "Phone number is required.";
-      else if (emergDigits.length !== 11)
-        errs.emergencyPhone = "Enter a valid number (e.g. 0300-1234567).";
-    }
+  const emergDigits = form.emergencyPhone.replace(/\D/g, "");
+  if (!form.emergencyPhone.trim())
+    errs.emergencyPhone = "Phone number is required.";
+  else if (emergDigits.length !== 11)
+    errs.emergencyPhone = "Enter a valid number (e.g. 0300-1234567).";
+}
     return errs;
   }
 
@@ -1171,7 +1159,7 @@ class RegisterDonor extends Component {
 
     try {
       const res = await fetch(
-        "http://localhost:8080/awt/backend/public/api/donors/register",
+        "http://localhost/awt/backend/public/api/donors/register",
         {
           method: "POST",
           body: formData,
@@ -1284,13 +1272,7 @@ class RegisterDonor extends Component {
         );
       case 3:
         return <StepPreferences {...common} />;
-      case 4:
-        return (
-          <StepEmergency
-            {...common}
-            onEmergencyPhone={this.handleEmergencyPhone}
-          />
-        );
+      
 
       default:
         return null;

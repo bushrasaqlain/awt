@@ -10,6 +10,7 @@ import Cities from "./components/dbadmin/city";
 import Management from "./components/dbadmin/manager";
 import ManageDonors from "./components/donormanagement/dashboard";
 import DonorManagement from "./components/dbadmin/donors";
+import BloodDonations from "./components/donormanagement/donationcollection"
 
 function Home() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/admin/manager" element={<Management />} />
         <Route path="/admin/donors" element={<DonorManagement />} />
         <Route path="/csr/dashboard" element={<ManageDonors />} />
+        <Route path="/csr/donationcollection" element={<BloodDonations />} />
       </Routes>
     </BrowserRouter>
   );

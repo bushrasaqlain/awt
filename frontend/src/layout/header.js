@@ -114,7 +114,7 @@ class DefaultHeader2 extends Component {
     return (
       <>
         {this.navLink("/csr/dashboard",         "Manage Donors")}
-        {this.navLink("/csr/blood-requests", "Blood Requests")}
+        {this.navLink("/csr/donationcollection", "Collected Donations")}
       </>
     );
   }

@@ -29,7 +29,7 @@ class CreateCitiesTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('cities');
+        $this->forge->createTable('cities', true);
     }
 
     public function down()

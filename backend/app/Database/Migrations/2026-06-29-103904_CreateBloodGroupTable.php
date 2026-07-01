@@ -24,7 +24,7 @@ class CreateBloodGroupTable extends Migration
  
         $this->forge->addPrimaryKey('id');
         $this->forge->addUniqueKey('name');
-        $this->forge->createTable('blood_groups');
+        $this->forge->createTable('blood_groups', true);
  
         // Seed the 8 blood groups
         $this->db->table('blood_groups')->insertBatch([

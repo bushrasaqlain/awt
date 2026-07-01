@@ -40,7 +40,7 @@ class CreateBloodStockTable extends Migration
 ]);
 $this->forge->addPrimaryKey('id');
 $this->forge->addForeignKey('blood_group_id', 'blood_groups', 'id', 'CASCADE', 'CASCADE');
-$this->forge->createTable('blood_stock');
+$this->forge->createTable('blood_stock', true);
         $this->forge->addPrimaryKey('id');
         $this->forge->addUniqueKey('blood_group_id');
         $this->forge->addForeignKey('blood_group_id', 'blood_groups', 'id', 'CASCADE', 'CASCADE');

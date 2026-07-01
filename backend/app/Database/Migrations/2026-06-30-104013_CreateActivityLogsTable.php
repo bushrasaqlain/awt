@@ -43,7 +43,7 @@ class CreateActivityLogsTable extends Migration
         $this->forge->addPrimaryKey('id');
         $this->forge->addKey('blood_group_id');
         $this->forge->addForeignKey('blood_group_id', 'blood_groups', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('activity_logs');
+        $this->forge->createTable('activity_logs', true);
     }
  
     public function down()
