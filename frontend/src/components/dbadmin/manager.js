@@ -2,23 +2,28 @@ import { Component, createRef } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 const formatPKPhone = (value) => {
-  // Keep digits only first
-  const digits = value.replace(/\D/g, "");
+  const digits = value.replace(/\D/g, "").slice(0, 11); // cap at 11 digits total
 
-  // Mobile: 03XX → 03XX-XXXXXXX
+  if (digits.length === 0) return "";
+
+  // Mobile: 03XX-XXXXXXX
   if (digits.startsWith("03")) {
     if (digits.length <= 4) return digits;
-    return digits.slice(0, 4) + "-" + digits.slice(4, 11);
+    return `${digits.slice(0, 4)}-${digits.slice(4, 11)}`;
   }
 
-  // Landline: 0XX → 0XX-XXXXXXX
+  // Landline: 0XX-XXXXXXX
   if (digits.startsWith("0")) {
     if (digits.length <= 3) return digits;
-    return digits.slice(0, 3) + "-" + digits.slice(3, 10);
+    return `${digits.slice(0, 3)}-${digits.slice(3, 10)}`;
   }
 
   return digits;
 };
+const formatName = (value) =>
+  value
+    .replace(/[^a-zA-Z\s]/g, "")          // strip digits & special chars
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalise first letter of each word
 const validatePKPhone = (value) => {
   const cleaned  = value.replace(/-/g, "");
   const mobile   = /^03[0-9]{9}$/.test(cleaned);
@@ -90,7 +95,7 @@ class Management extends Component {
     if (!addEmail.trim())                              errors.email    = "Email is required.";
     else if (!/\S+@\S+\.\S+/.test(addEmail))          errors.email    = "Enter a valid email.";
     if (addPhone.trim() && !validatePKPhone(addPhone.trim())) {
-  errors.phone = "Enter a valid Pakistani number (e.g. 051-3657894 or 0315-1863475).";
+  errors.phone = "Enter a valid Pakistani number (e.g. ***-******* or 03**-*******).";
 }
     if (!addPassword.trim())                           errors.password = "Password is required.";
     else if (addPassword.length < 6)                   errors.password = "At least 6 characters.";
@@ -400,7 +405,7 @@ if (editPhone.trim() && !validatePKPhone(editPhone.trim())) {
                 <label className="form-label fw-semibold small">Full Name</label>
                 <input type="text" className={`form-control ${addErrors.name ? "is-invalid" : ""}`}
                   placeholder="e.g. Sara Khan"
-                  value={addName} onChange={e => this.setState({ addName: e.target.value })} autoFocus />
+                  value={addName} onChange={e => this.setState({ addName: formatName(e.target.value) })} autoFocus />
                 {addErrors.name && <div className="invalid-feedback">{addErrors.name}</div>}
               </div>
 
@@ -420,7 +425,7 @@ if (editPhone.trim() && !validatePKPhone(editPhone.trim())) {
 
               <div className="mb-3">
   <label className="form-label fw-semibold small">
-    Phone <span className="text-muted fw-normal">(optional)</span>
+    Phone
   </label>
   <input
     type="tel"

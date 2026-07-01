@@ -104,7 +104,7 @@ class Database extends Config
     //     * Sample database connection for SQLSRV.
     //     *
     //     * @var array<string, mixed>
-    //     */
+    //     */d
     //    public array $default = [
     //        'DSN'        => '',
     //        'hostname'   => 'localhost',

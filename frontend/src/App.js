@@ -9,12 +9,13 @@ import AdminDashboard from "./components/dbadmin/dashboard-area";
 import Cities from "./components/dbadmin/city";
 import Management from "./components/dbadmin/manager";
 import ManageDonors from "./components/donormanagement/dashboard";
-
+import DonorManagement from "./components/dbadmin/donors";
+import DonorList from "./components/donormanagement/donorlist"
 function Home() {
   return (
     
     <div className="container text-center py-5 mt-5">
-      <h1>Welcome to Aziz Welfare Trust</h1>
+      <h1>Welcome to AWT Blood Bank</h1>
     </div>
   );
 }
@@ -27,10 +28,13 @@ function App() {
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/csr/donorlist" element={<DonorList />} />
         <Route path="/admin/dashboard-area" element={<AdminDashboard />} />
         <Route path="/admin/city" element={<Cities />} />
         <Route path="/admin/manager" element={<Management />} />
+        <Route path="/admin/donors" element={<DonorManagement />} />
         <Route path="/csr/dashboard" element={<ManageDonors />} />
+          <Route path="/csr/donorlist" element={<DonorList />} />
       </Routes>
     </BrowserRouter>
   );

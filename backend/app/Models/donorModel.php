@@ -11,13 +11,14 @@ class DonorModel extends Model
     protected $returnType = 'array';
 
     protected $allowedFields = [
-        'user_id',  // <-- Add this to link to user table
+        'user_id',
+        'donor_id',
         'full_name',
         'dob',
         'age',
         'gender',
         'blood_group',
-        'weight',   
+        'weight',
         'cnic',
         'photo',
         'whatsapp',
@@ -37,5 +38,10 @@ class DonorModel extends Model
     public function cnicExists(string $cnic): bool
     {
         return $this->where('cnic', $cnic)->countAllResults() > 0;
+    }
+
+    public function donorIdExists(string $donorId): bool
+    {
+        return $this->where('donor_id', $donorId)->countAllResults() > 0;
     }
 }
