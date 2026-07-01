@@ -45,5 +45,8 @@ $routes->get('api/donors', 'Api\Donors::index');
     $routes->post('donors/(:num)', 'Api\Donors::update/$1'); // fallback for multipart PUT (PHP/CI4 quirk)
     $routes->patch('donors/(:num)/status', 'Api\Donors::updateStatus/$1');
     $routes->get('donors/(:num)/history', 'Api\Donors::history/$1');
-    $routes->get('blood-donations',      'BloodDonationController::index');
-$routes->post('blood-donations/save','BloodDonationController::save');
+    // $routes->get('blood-donations',      'BloodDonationController::index');
+    // ── Blood Donations — add these BEFORE any catch-all routes ──
+$routes->get('api/blood-donations',              'Api\BloodDonationController::index');
+$routes->post('api/blood-donations/scan',        'Api\BloodDonationController::scan');
+$routes->delete('api/blood-donations/(:num)',    'Api\BloodDonationController::delete/$1');

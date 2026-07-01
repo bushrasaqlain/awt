@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\Api;
 
 use App\Models\BloodDonationModel;
 use App\Models\DonorModel;
-use CodeIgniter\RESTful\ResourceController;
+use CodeIgniter\HTTP\ResponseInterface;
+use App\Controllers\BaseController;
 
-class BloodDonationController extends ResourceController
+class BloodDonationController extends BaseController
 {
     protected $donationModel;
     protected $donorModel;
@@ -127,7 +128,7 @@ class BloodDonationController extends ResourceController
 
         return $this->response->setJSON([
             'status'  => 'success',
-            'message' => "Donation saved for donor: {$donor['name']}.",
+            'message' => "Donation saved for donor: {$donor['full_name']}.",
             'data'    => $saved,
         ])->setStatusCode(201);
     }
