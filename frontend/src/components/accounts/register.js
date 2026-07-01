@@ -164,7 +164,6 @@ function validateFaceImage(file) {
   });
 }
 
-/* ── Donor Card Component ── */
 
 class DonorCard extends Component {
   constructor(props) {
@@ -695,7 +694,7 @@ class StepContact extends Component {
                 name="whatsapp"
                 value={form.whatsapp}
                 onChange={onWhatsApp}
-                placeholder="0313-5495655"
+                placeholder="XXXX-XXXXXXX"
                 maxLength={12}
               />
             </Field>
@@ -811,7 +810,7 @@ class StepPreferences extends Component {
                 name="emergencyPhone"
                 value={form.emergencyPhone}
                 onChange={onEmergencyPhone}
-                placeholder="0300-1234567"
+                placeholder="XXXX-XXXXXXX"
                 maxLength={12}
               />
             </Field>
@@ -1044,84 +1043,84 @@ class RegisterDonor extends Component {
       errors: { ...prev.errors, emergencyPhone: "" },
     }));
   }
-  validate(s) {
-    const { form } = this.state;
-    const errs = {};
-    const today = getToday();
-    const maxDob = getMaxDob();
-    const minDob = getMinDob();
+ validate(s) {
+  const { form } = this.state;
+  const errs = {};
+  const today = getToday();
+  const maxDob = getMaxDob();
+  const minDob = getMinDob();
 
-    if (s === 1) {
-      if (!form.photo) errs.photo = "Face photo is required.";
+  if (s === 1 || s === "all") {
+    if (!form.photo) errs.photo = "Face photo is required.";
 
-      if (!form.fullName.trim()) errs.fullName = "Full name is required.";
-      else if (/\d/.test(form.fullName))
-        errs.fullName = "Name must not contain numbers.";
+    if (!form.fullName.trim()) errs.fullName = "Full name is required.";
+    else if (/\d/.test(form.fullName))
+      errs.fullName = "Name must not contain numbers.";
 
-      if (!form.dob) {
-        errs.dob = "Date of birth is required.";
-      } else if (form.dob >= today) {
-        errs.dob = "Date of birth cannot be today or a future date.";
-      } else if (form.dob > maxDob) {
-        errs.dob = "Donor must be at least 15 years old.";
-      } else if (form.dob < minDob) {
-        errs.dob = "Age cannot exceed 65 years.";
-      }
-
-      if (!form.gender) errs.gender = "Select gender.";
-      if (!form.bloodGroup) errs.bloodGroup = "Select blood group.";
-
-      if (!form.weight) {
-        errs.weight = "Please enter your weight.";
-      } else {
-        const weightNum = parseFloat(form.weight);
-        if (isNaN(weightNum) || weightNum <= 0) {
-          errs.weight = "Please enter a valid weight in kg.";
-        } else if (weightNum < 45 || weightNum > 160) {
-          errs.weight =
-            "You must weigh between 45-160 kg (110-352 lbs) to donate blood.";
-        }
-      }
-
-      const cnicDigits = form.cnic.replace(/\D/g, "");
-      if (!cnicDigits) errs.cnic = "CNIC is required.";
-      else if (cnicDigits.length !== 13)
-        errs.cnic = "CNIC must be 13 digits (e.g. 37106-8234782-3).";
+    if (!form.dob) {
+      errs.dob = "Date of birth is required.";
+    } else if (form.dob >= today) {
+      errs.dob = "Date of birth cannot be today or a future date.";
+    } else if (form.dob > maxDob) {
+      errs.dob = "Donor must be at least 15 years old.";
+    } else if (form.dob < minDob) {
+      errs.dob = "Age cannot exceed 65 years.";
     }
 
-    if (s === 2) {
-      const waDigits = form.whatsapp.replace(/\D/g, "");
-      if (!form.whatsapp.trim()) errs.whatsapp = "WhatsApp number is required.";
-      else if (waDigits.length !== 11)
-        errs.whatsapp = "Enter a valid number (e.g. 0313-5495655).";
+    if (!form.gender) errs.gender = "Select gender.";
+    if (!form.bloodGroup) errs.bloodGroup = "Select blood group.";
 
-      if (!form.email.trim()) errs.email = "Email is required.";
-      else if (!/\S+@\S+\.\S+/.test(form.email))
-        errs.email = "Enter a valid email address.";
-
-      if (!form.address.trim()) errs.address = "Address is required.";
-      if (!form.city) errs.city = "Select a city.";
+    if (!form.weight) {
+      errs.weight = "Please enter your weight.";
+    } else {
+      const weightNum = parseFloat(form.weight);
+      if (isNaN(weightNum) || weightNum <= 0) {
+        errs.weight = "Please enter a valid weight in kg.";
+      } else if (weightNum < 45 || weightNum > 160) {
+        errs.weight =
+          "You must weigh between 45-160 kg (110-352 lbs) to donate blood.";
+      }
     }
 
-if (s === 3) {
-  if (!form.donationLocation)
-    errs.donationLocation = "Select donation preference.";
-
-  if (!form.emergencyName.trim()) errs.emergencyName = "Name is required.";
-  else if (/\d/.test(form.emergencyName))
-    errs.emergencyName = "Name must not contain numbers.";
-
-  if (!form.emergencyRelation.trim())
-    errs.emergencyRelation = "Relationship is required.";
-
-  const emergDigits = form.emergencyPhone.replace(/\D/g, "");
-  if (!form.emergencyPhone.trim())
-    errs.emergencyPhone = "Phone number is required.";
-  else if (emergDigits.length !== 11)
-    errs.emergencyPhone = "Enter a valid number (e.g. 0300-1234567).";
-}
-    return errs;
+    const cnicDigits = form.cnic.replace(/\D/g, "");
+    if (!cnicDigits) errs.cnic = "CNIC is required.";
+    else if (cnicDigits.length !== 13)
+      errs.cnic = "CNIC must be 13 digits (e.g. 37106-8234782-3).";
   }
+
+  if (s === 2 || s === "all") {
+    const waDigits = form.whatsapp.replace(/\D/g, "");
+    if (!form.whatsapp.trim()) errs.whatsapp = "WhatsApp number is required.";
+    else if (waDigits.length !== 11)
+      errs.whatsapp = "Enter a valid number (e.g. 0313-5495655).";
+
+    if (!form.email.trim()) errs.email = "Email is required.";
+    else if (!/\S+@\S+\.\S+/.test(form.email))
+      errs.email = "Enter a valid email address.";
+
+    if (!form.address.trim()) errs.address = "Address is required.";
+    if (!form.city) errs.city = "Select a city.";
+  }
+
+  if (s === 3 || s === "all") {
+    if (!form.donationLocation)
+      errs.donationLocation = "Select donation preference.";
+
+    if (!form.emergencyName.trim()) errs.emergencyName = "Name is required.";
+    else if (/\d/.test(form.emergencyName))
+      errs.emergencyName = "Name must not contain numbers.";
+
+    if (!form.emergencyRelation.trim())
+      errs.emergencyRelation = "Relationship is required.";
+
+    const emergDigits = form.emergencyPhone.replace(/\D/g, "");
+    if (!form.emergencyPhone.trim())
+      errs.emergencyPhone = "Phone number is required.";
+    else if (emergDigits.length !== 11)
+      errs.emergencyPhone = "Enter a valid number (e.g. 0300-1234567).";
+  }
+  return errs;
+}
 
   nextStep() {
     const errs = this.validate(this.state.step);
@@ -1138,53 +1137,58 @@ if (s === 3) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async handleSubmit(e) {
-    e.preventDefault();
-    const errs = this.validate(5);
-    if (Object.keys(errs).length > 0) {
-      this.setState({ errors: errs });
-      return;
-    }
+ async handleSubmit(e) {
+  e.preventDefault();
+  const errs = this.validate("all");
+  if (Object.keys(errs).length > 0) {
+    // figure out which step to show based on the first error
+    const step1Fields = ["photo","fullName","dob","gender","bloodGroup","weight","cnic"];
+    const step2Fields = ["whatsapp","email","address","city"];
+    let targetStep = 3;
+    if (Object.keys(errs).some(f => step1Fields.includes(f))) targetStep = 1;
+    else if (Object.keys(errs).some(f => step2Fields.includes(f))) targetStep = 2;
 
-    const { form } = this.state;
-    const formData = new FormData();
-    const timeSlot = `${form.preferredTimeFrom} – ${form.preferredTimeTo}`;
-
-    Object.entries(form).forEach(([k, v]) => {
-      if (k === "photo" && v) formData.append(k, v);
-      else if (k !== "photo") formData.append(k, v);
-    });
-
-    formData.append("timeSlot", timeSlot);
-
-    try {
-      const res = await fetch(
-        "http://localhost:8080/awt/backend/public/api/donors/register",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      if (res.ok) {
-        const donorId = generateDonorId();
-        this.setState({
-          submitted: true,
-          showCard: true,
-          donorId: donorId,
-        });
-      } else {
-        const errorData = await res.json();
-        alert(
-          "Submission failed: " + (errorData.message || "Please try again."),
-        );
-        console.error("Registration errors:", errorData.errors);
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      alert("Unable to connect to the server. Please try again.");
-    }
+    this.setState({ errors: errs, step: targetStep });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
   }
+
+  const { form } = this.state;
+  const formData = new FormData();
+
+  Object.entries(form).forEach(([k, v]) => {
+    if (k === "photo" && v) formData.append(k, v);
+    else if (k !== "photo") formData.append(k, v);
+  });
+
+  try {
+    const res = await fetch(
+      "http://localhost:8080/awt/backend/public/api/donors/register",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (res.ok) {
+      const donorId = generateDonorId();
+      this.setState({
+        submitted: true,
+        showCard: true,
+        donorId: donorId,
+      });
+    } else {
+      const errorData = await res.json();
+      alert(
+        "Submission failed: " + (errorData.message || "Please try again."),
+      );
+      console.error("Registration errors:", errorData.errors);
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    alert("Unable to connect to the server. Please try again.");
+  }
+}
 
   resetForm() {
     this.setState({
@@ -1270,9 +1274,13 @@ if (s === 3) {
             cities={cities}
           />
         );
-      case 3:
-        return <StepPreferences {...common} />;
-      
+     case 3:
+  return (
+    <StepPreferences
+      {...common}
+      onEmergencyPhone={this.handleEmergencyPhone}
+    />
+  );
 
       default:
         return null;

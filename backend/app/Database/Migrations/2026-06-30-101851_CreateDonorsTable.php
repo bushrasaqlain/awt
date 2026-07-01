@@ -27,6 +27,12 @@ class CreateDonorsTable extends Migration
                 'unsigned'   => true,
                 'null'       => true,
             ],
+            'donor_id' => [
+                'type'           => 'INT',
+                'constraint'     => 11,
+                'unsigned'       => true,
+                'auto_increment' => true,
+            ],
             'full_name' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,

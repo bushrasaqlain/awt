@@ -48,7 +48,7 @@ class Login extends Component {
     this.setState({ loading: true, serverError: "" });
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("http://localhost:8080/awt/backend/public/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
