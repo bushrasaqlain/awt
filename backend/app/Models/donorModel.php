@@ -4,9 +4,10 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class DonorModel extends Model
-{
-    protected $table      = 'donors';
+class donorModel extends Model
+   {
+    
+    protected $table = 'donors';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
 

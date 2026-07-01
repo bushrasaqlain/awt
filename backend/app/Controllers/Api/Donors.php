@@ -3,27 +3,33 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Models\DonorModel;
+use App\Models\DonorModel;      // ← add this
 use App\Models\UserModel;
+use App\Models\HistoryModel;
 
 class Donors extends BaseController
 {
-    private DonorModel $donorModel;
+    private DonorModel $donorModel;      // ← add this
     private UserModel $userModel;
+    private HistoryModel $historyModel;
 
     public function __construct()
     {
-        $this->donorModel = new DonorModel();
-        $this->userModel = new UserModel();
+        $this->donorModel   = new DonorModel();   // ← add this
+        $this->userModel    = new UserModel();
+        $this->historyModel = new HistoryModel();
 
-        // Enable session for auto-login
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
+
     public function index(): \CodeIgniter\HTTP\ResponseInterface
     {
-        $donors = $this->donorModel->findAll();
+        $donors = $this->donorModel
+            ->select('donors.*, cities.name as city_name')
+            ->join('cities', 'cities.id = donors.city', 'left')
+            ->findAll();
 
         return $this->response->setStatusCode(200)->setJSON([
             'status' => true,
@@ -216,7 +222,7 @@ class Donors extends BaseController
             }
 
             $donorPk = $this->donorModel->getInsertID();
-
+            $this->historyModel->logCreation('donors', $donorPk, array_merge($donorData, ['user_id' => $userId]));
             // ── Step 4: Auto-login the user ──────────────────────
             $_SESSION['awt_user'] = [
                 'id'    => $userId,
@@ -245,56 +251,115 @@ class Donors extends BaseController
             ]);
         }
     }
-    public function updateStatus($donorId)
+  public function updateStatus($donorId)
 {
     try {
-        // Get the request data
-        $json = $this->request->getJSON();
-        $newStatus = $json->status ?? null;
+        $rawBody = $this->request->getBody();
+        $json = json_decode($rawBody, true);
+        $newStatus = $json['status'] ?? $this->request->getPost('status');
 
-        // Validate status
         $allowedStatuses = ['pending', 'approved', 'rejected'];
-        if (!in_array($newStatus, $allowedStatuses)) {
+        if (!in_array($newStatus, $allowedStatuses, true)) {
             return $this->response->setStatusCode(400)->setJSON([
                 'status' => false,
-                'message' => 'Invalid status. Allowed values: pending, approved, rejected'
+                'message' => 'Invalid status. Allowed values: pending, approved, rejected',
             ]);
         }
 
-        // Find the donor
         $donor = $this->donorModel->find($donorId);
         if (!$donor) {
             return $this->response->setStatusCode(404)->setJSON([
                 'status' => false,
-                'message' => 'Donor not found'
+                'message' => 'Donor not found',
             ]);
         }
 
-        // Update donor status
-        $updated = $this->donorModel->update($donorId, ['status' => $newStatus]);
+        $oldStatus = $donor['status'];
 
+        $updated = $this->donorModel->update($donorId, ['status' => $newStatus]);
         if (!$updated) {
+            $errors = $this->donorModel->errors();
+            log_message('error', 'Donor update error: ' . json_encode($errors));
             return $this->response->setStatusCode(500)->setJSON([
                 'status' => false,
-                'message' => 'Failed to update donor status'
+                'message' => 'Failed to update donor status',
+                'errors' => $errors,
             ]);
         }
+
+        $currentUserId = $_SESSION['awt_user']['id'] ?? null;
+        $this->historyModel->logStatusChange('donors', (int)$donorId, $oldStatus, $newStatus, $currentUserId);
 
         return $this->response->setStatusCode(200)->setJSON([
             'status' => true,
             'message' => 'Donor status updated successfully',
-            'data' => [
-                'id' => $donorId,
-                'status' => $newStatus
-            ]
+            'data' => ['id' => $donorId, 'status' => $newStatus],
         ]);
-
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
         log_message('error', 'Error updating donor status: ' . $e->getMessage());
         return $this->response->setStatusCode(500)->setJSON([
             'status' => false,
-            'message' => 'Server error: ' . $e->getMessage()
+            'message' => 'Server error: ' . $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
         ]);
     }
 }
+    public function update($donorId): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $oldData = $this->donorModel->find($donorId);
+        if (!$oldData) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'status' => false,
+                'message' => 'Donor not found',
+            ]);
+        }
+
+        $fields = [
+            'fullName' => 'full_name',
+            'fatherHusbandName' => 'father_husband_name',
+            'dob' => 'dob',
+            'age' => 'age',
+            'gender' => 'gender',
+            'bloodGroup' => 'blood_group',
+            'weight' => 'weight',
+            'cnic' => 'cnic',
+            'whatsapp' => 'whatsapp',
+            'email' => 'email',
+            'address' => 'address',
+            'city' => 'city',
+            'donationLocation' => 'donation_location',
+            'emergencyName' => 'emergency_name',
+            'emergencyRelation' => 'emergency_relation',
+            'emergencyPhone' => 'emergency_phone',
+        ];
+
+        $data = [];
+        foreach ($fields as $post => $col) {
+            $val = $this->request->getPost($post);
+            if ($val !== null && $val !== '') {
+                $data[$col] = trim($val);
+            }
+        }
+
+        $updated = $this->donorModel->update($donorId, $data);
+        if (!$updated) {
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => false,
+                'message' => 'Failed to update donor',
+                'errors' => $this->donorModel->errors(),
+            ]);
+        }
+
+        $newData = $this->donorModel->find($donorId);
+        $currentUserId = $_SESSION['awt_user']['id'] ?? null;
+
+        $currentUserId = $_SESSION['awt_user']['id'] ?? null;
+        $this->historyModel->logUpdate('donors', $donorId, $oldData, $newData, $currentUserId);
+
+        return $this->response->setStatusCode(200)->setJSON([
+            'status' => true,
+            'message' => 'Donor updated successfully',
+        ]);
+    }
 }

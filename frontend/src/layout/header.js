@@ -1,3 +1,4 @@
+// Keep only ONE definition of DefaultHeader2
 import React, { Component } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -39,18 +40,14 @@ class DefaultHeader2 extends Component {
       const data = await res.json();
 
       if (res.ok && data.status && data.user) {
-        // Server confirms an active session — sync localStorage + state
         localStorage.setItem("awt_user", JSON.stringify(data.user));
         this.setState({ user: data.user, checkedSession: true });
       } else {
-        // No active server session — clear stale local data
         localStorage.removeItem("awt_user");
         localStorage.removeItem("awt_token");
         this.setState({ user: null, checkedSession: true });
       }
     } catch {
-      // Network/server error — fail safe by trusting nothing extra,
-      // but don't forcibly log the user out on a transient failure
       this.setState({ checkedSession: true });
     }
   }
@@ -103,9 +100,9 @@ class DefaultHeader2 extends Component {
     return (
       <>
         {this.navLink("/admin/dashboard-area", "Dashboard")}
-        {this.navLink("/admin/manager",           "Management")}
-        {this.navLink("/admin/donors",         "Donor Management")}
-        {this.navLink("/admin/city",           "City")}
+        {this.navLink("/admin/manager", "Management")}
+        {this.navLink("/admin/donors", "Donor Management")}
+        {this.navLink("/admin/city", "City")}
       </>
     );
   }
@@ -113,8 +110,8 @@ class DefaultHeader2 extends Component {
   renderCsrTabs() {
     return (
       <>
-        {this.navLink("/csr/dashboard",         "Manage Donors")}
-        {this.navLink("/csr/donorlist",         "Donors List")}
+        {this.navLink("/csr/dashboard", "Manage Donors")}
+        {this.navLink("/csr/donorlist", "Donors List")}
         {this.navLink("/csr/blood-requests", "Blood Requests")}
       </>
     );
@@ -125,8 +122,7 @@ class DefaultHeader2 extends Component {
     const role = user?.role;
     const isLoggedIn = !!role;
 
-    // Optional: avoid flashing "logged out" UI for a split second
-    // while the session check is in flight, if you'd rather show a blank/spinner state
+    // Uncomment the line below to wait for session check before rendering
     // if (!checkedSession) return null;
 
     return (
@@ -152,7 +148,7 @@ class DefaultHeader2 extends Component {
 
             <div className="d-none d-lg-flex" style={{ marginLeft: 24, gap: 4, flex: 1 }}>
               {role === "admin" && this.renderAdminTabs()}
-              {role === "csr"   && this.renderCsrTabs()}
+              {role === "csr" && this.renderCsrTabs()}
             </div>
 
             <div className="d-none d-lg-flex ms-auto align-items-center" style={{ gap: 12 }}>
@@ -192,6 +188,11 @@ class DefaultHeader2 extends Component {
                 </>
               ) : (
                 <>
+                  <Link to="/livedashboard" style={{
+                    textDecoration: "none", padding: "7px 18px",
+                    border: "2px solid #dc3545", borderRadius: 8,
+                    color: "#dc3545", fontWeight: 600, fontSize: 14,
+                  }}>Live Dashboard</Link>
                   <Link to="/login" style={{
                     textDecoration: "none", padding: "7px 18px",
                     border: "2px solid #dc3545", borderRadius: 8,
@@ -239,7 +240,7 @@ class DefaultHeader2 extends Component {
           }}>
             <div style={{ padding: "12px 20px", display: "flex", flexDirection: "column", gap: 4 }}>
               {role === "admin" && this.renderAdminTabs()}
-              {role === "csr"   && this.renderCsrTabs()}
+              {role === "csr" && this.renderCsrTabs()}
 
               {isLoggedIn ? (
                 <>
@@ -259,7 +260,7 @@ class DefaultHeader2 extends Component {
                 </>
               ) : (
                 <>
-                  <Link to="/login"    onClick={this.closeMenu} style={{ padding: "8px 14px", color: "#dc3545", fontWeight: 600, textDecoration: "none" }}>Login</Link>
+                  <Link to="/login" onClick={this.closeMenu} style={{ padding: "8px 14px", color: "#dc3545", fontWeight: 600, textDecoration: "none" }}>Login</Link>
                   <Link to="/register" onClick={this.closeMenu} style={{ padding: "8px 14px", background: "#dc3545", color: "#fff", borderRadius: 8, fontWeight: 600, textDecoration: "none" }}>Register</Link>
                 </>
               )}

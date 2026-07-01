@@ -1188,14 +1188,15 @@ if (s === 3) {
         },
       );
 
-      if (res.ok) {
-        const resData = await res.json();
-        this.setState({
-          submitted: true,
-          showCard: true,
-          donorId: resData.data.donor_id,
-        });
-      } else {
+     if (res.ok) {
+  const resData = await res.json();
+  this.setState({
+    submitted: true,
+    showCard: true,
+    donorId: resData.data.donor_id,
+  });
+  if (this.props.onSuccess) this.props.onSuccess(); // ← notify parent to refresh list
+}else {
         const errorData = await res.json();
         alert(
           "Submission failed: " + (errorData.message || "Please try again."),
@@ -1304,32 +1305,29 @@ if (s === 3) {
   render() {
     const { submitted, step, form, donorId, showCard } = this.state;
 
-    if (submitted) {
-      return (
-        <div className="min-vh-100 pt-5 mt-3 bg-light d-flex align-items-center justify-content-center py-5">
-          <div
-            className="card shadow-sm border-0 text-center p-5"
-            style={{ maxWidth: 480, width: "100%" }}
-          >
-            <div style={{ fontSize: 56 }}>✅</div>
-            <h3 className="fw-bold text-success mt-3">
-              Registration Successful!
-            </h3>
-            <p className="text-muted mt-2">
-              Thank you, <strong>{form.fullName}</strong>, for registering as a
-              blood donor with AWT Blood Bank. Our team will review your
-              information shortly.
-            </p>
-            <button
-              className="btn btn-outline-secondary mt-3"
-              onClick={this.resetForm}
-            >
-              Register Another Donor
+if (submitted) {
+  return (
+    <div className="min-vh-100 pt-5 mt-3 bg-light d-flex align-items-center justify-content-center py-5">
+      <div className="card shadow-sm border-0 text-center p-5" style={{ maxWidth: 480, width: "100%" }}>
+        <div style={{ fontSize: 56 }}>✅</div>
+        <h3 className="fw-bold text-success mt-3">Registration Successful!</h3>
+        <p className="text-muted mt-2">
+          Thank you, <strong>{form.fullName}</strong>, for registering as a blood donor with AWT Blood Bank. Our team will review your information shortly.
+        </p>
+        <div className="d-flex gap-2 justify-content-center mt-3">
+          <button className="btn btn-outline-secondary" onClick={this.resetForm}>
+            Register Another Donor
+          </button>
+          {this.props.onClose && (
+            <button className="btn btn-danger" onClick={this.props.onClose}>
+              Close
             </button>
-          </div>
+          )}
         </div>
-      );
-    }
+      </div>
+    </div>
+  );
+}
 
     return (
       <div className="min-vh-100 pt-5 mt-4 bg-light">
