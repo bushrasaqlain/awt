@@ -21,6 +21,15 @@ class Donors extends BaseController
             session_start();
         }
     }
+    public function index(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $donors = $this->donorModel->findAll();
+
+        return $this->response->setStatusCode(200)->setJSON([
+            'status' => true,
+            'data'   => $donors,
+        ]);
+    }
     private function generateUniqueDonorId(): string
     {
         do {
@@ -65,6 +74,41 @@ class Donors extends BaseController
                 $errors['email'] = 'This email is already registered.';
             }
 
+            // Donor validation
+            if (empty($fullName))          $errors['fullName']          = 'Full name is required.';
+            if (empty($dob) && empty($age)) $errors['dob']               = 'Date of birth or age is required.';
+            if (empty($gender))            $errors['gender']            = 'Gender is required.';
+            if (empty($bloodGroup))        $errors['bloodGroup']        = 'Blood group is required.';
+            if (empty($weight)) {
+                $errors['weight'] = 'Weight is required.';
+            } elseif (!is_numeric($weight) || $weight < 45 || $weight > 160) {
+                $errors['weight'] = 'Weight must be between 45-160 kg.';
+            }
+            if (empty($whatsapp))          $errors['whatsapp']          = 'WhatsApp number is required.';
+            if (empty($address))           $errors['address']           = 'Address is required.';
+            if (empty($city))              $errors['city']              = 'City is required.';
+            if (empty($donationLocation))  $errors['donationLocation']  = 'Donation location is required.';
+            if (empty($emergencyName))     $errors['emergencyName']     = 'Emergency contact name is required.';
+            if (empty($emergencyRelation)) $errors['emergencyRelation'] = 'Relationship is required.';
+            if (empty($emergencyPhone))    $errors['emergencyPhone']    = 'Emergency phone is required.';
+
+            // CNIC validation
+            $cnicDigits = preg_replace('/\D/', '', $cnic);
+            if (empty($cnicDigits)) {
+                $errors['cnic'] = 'CNIC is required.';
+            } elseif (strlen($cnicDigits) !== 13) {
+                $errors['cnic'] = 'CNIC must be 13 digits.';
+            } elseif ($this->donorModel->cnicExists($cnic)) {
+                $errors['cnic'] = 'This CNIC is already registered.';
+            }
+
+            if (!empty($errors)) {
+                return $this->response->setStatusCode(422)->setJSON([
+                    'status'  => false,
+                    'message' => 'Validation failed.',
+                    'errors'  => $errors,
+                ]);
+            }
             // Donor validation
             if (empty($fullName))          $errors['fullName']          = 'Full name is required.';
             if (empty($dob) && empty($age)) $errors['dob']               = 'Date of birth or age is required.';
@@ -201,4 +245,56 @@ class Donors extends BaseController
             ]);
         }
     }
+    public function updateStatus($donorId)
+{
+    try {
+        // Get the request data
+        $json = $this->request->getJSON();
+        $newStatus = $json->status ?? null;
+
+        // Validate status
+        $allowedStatuses = ['pending', 'approved', 'rejected'];
+        if (!in_array($newStatus, $allowedStatuses)) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'status' => false,
+                'message' => 'Invalid status. Allowed values: pending, approved, rejected'
+            ]);
+        }
+
+        // Find the donor
+        $donor = $this->donorModel->find($donorId);
+        if (!$donor) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'status' => false,
+                'message' => 'Donor not found'
+            ]);
+        }
+
+        // Update donor status
+        $updated = $this->donorModel->update($donorId, ['status' => $newStatus]);
+
+        if (!$updated) {
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => false,
+                'message' => 'Failed to update donor status'
+            ]);
+        }
+
+        return $this->response->setStatusCode(200)->setJSON([
+            'status' => true,
+            'message' => 'Donor status updated successfully',
+            'data' => [
+                'id' => $donorId,
+                'status' => $newStatus
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        log_message('error', 'Error updating donor status: ' . $e->getMessage());
+        return $this->response->setStatusCode(500)->setJSON([
+            'status' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ]);
+    }
+}
 }

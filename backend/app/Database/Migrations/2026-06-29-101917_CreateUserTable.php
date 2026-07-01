@@ -66,7 +66,7 @@ class CreateUserTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('user');
+        $this->forge->createTable('user', true);
     }
 
     public function down()

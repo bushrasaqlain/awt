@@ -50,7 +50,8 @@ class DonorList extends Component {
       historyEntries: [],
 
       search: "",
-      statusFilter: "all",
+  statusFilter: "all",
+  activeFilter: "all", 
     };
   }
 
@@ -210,30 +211,39 @@ class DonorList extends Component {
       });
   };
 
-  toggleStatus = (donor) => {
-    const nextStatus = donor.status === "approved" ? "pending" : "approved";
-    fetch(`${API_BASE}/donors/${donor.id}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: nextStatus }),
-    })
-      .then((res) => res.json())
-      .then(() => this.fetchDonors())
-      .catch(() => this.setState({ error: "Failed to update status." }));
+ toggleStatus = (donor) => {
+  // Cycle through statuses: pending -> approved -> rejected -> pending
+  const statusCycle = {
+    pending: "approved",
+    approved: "rejected",
+    rejected: "pending"
   };
-
-  filteredDonors = () => {
-    const { donors, search, statusFilter } = this.state;
-    return donors.filter((d) => {
-      const matchesSearch =
-        !search ||
-        (d.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
-        (d.cnic || "").includes(search) ||
-        (d.whatsapp || "").includes(search);
-      const matchesStatus = statusFilter === "all" || d.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  };
+  const nextStatus = statusCycle[donor.status] || "pending";
+  
+  fetch(`${API_BASE}/donors/${donor.id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: nextStatus }),
+  })
+    .then((res) => res.json())
+    .then(() => this.fetchDonors())
+    .catch(() => this.setState({ error: "Failed to update status." }));
+};
+ filteredDonors = () => {
+  const { donors, search, statusFilter, activeFilter } = this.state;
+  return donors.filter((d) => {
+    const matchesSearch =
+      !search ||
+      (d.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.cnic || "").includes(search) ||
+      (d.whatsapp || "").includes(search);
+    
+    const matchesStatus = statusFilter === "all" || d.status === statusFilter;
+    const matchesActive = activeFilter === "all" || d.status === activeFilter;
+    
+    return matchesSearch && matchesStatus && matchesActive;
+  });
+};
 
   initials = (name) =>
     (name || "?")
@@ -300,21 +310,37 @@ class DonorList extends Component {
     );
   }
 
-  renderStatusBadge(status) {
-    const variant = status === "approved" ? "success" : status === "pending" ? "warning" : "danger";
-    return <span className={`badge bg-${variant}-subtle text-${variant}-emphasis text-capitalize`}>{status}</span>;
-  }
+ renderStatusBadge(status) {
+  const variant = status === "approved" ? "success" : 
+                  status === "pending" ? "warning" : 
+                  status === "rejected" ? "danger" : "secondary";
+  return <span className={`badge bg-${variant}-subtle text-${variant}-emphasis text-capitalize`}>{status}</span>;
+}
 
-  renderActions(donor) {
-    return (
-      <>
-        <button className="btn btn-sm btn-link text-center text-secondary text-decoration-none" title="History" onClick={() => this.openHistoryModal(donor)}>⏱</button>
-      </>
-    );
-  }
+ renderActions(donor) {
+  return (
+    <>
+      <button 
+        className="btn btn-sm btn-link text-center text-secondary text-decoration-none" 
+        title="History" 
+        onClick={() => this.openHistoryModal(donor)}
+      >
+        ⏱
+      </button>
+      <button 
+        className="btn btn-sm btn-link text-center text-secondary text-decoration-none" 
+        title="Toggle Status" 
+        onClick={() => this.toggleStatus(donor)}
+      >
+        🔄
+      </button>
+    </>
+  );
+}
 
   render() {
-    const { loading, error, search, statusFilter, donors } = this.state;
+  const { loading, error, search, statusFilter, activeFilter, donors } = this.state;
+
     const filtered = this.filteredDonors();
     const counts = {
       total: donors.length,
@@ -327,6 +353,51 @@ class DonorList extends Component {
          <div>
               <h4 className="fw-bold text-danger mt-3  mb-3">Donor List</h4>
             </div>
+             <div className="bg-white rounded-3 border shadow-sm p-3 mb-4">
+        <div className="row g-3 align-items-center">
+          <div className="col-md-4">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search donors..."
+              value={search}
+              onChange={(e) => this.setState({ search: e.target.value })}
+            />
+          </div>
+          <div className="col-md-3">
+            <select
+              className="form-select"
+              value={statusFilter}
+              onChange={(e) => this.setState({ statusFilter: e.target.value })}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div className="col-md-3">
+            <select
+              className="form-select"
+              value={activeFilter}
+              onChange={(e) => this.setState({ activeFilter: e.target.value })}
+            >
+              <option value="all">All Donors</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Active</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div className="col-md-2 text-end">
+            <span className="text-muted small">
+              Total: {donors.length} | 
+              Active: {donors.filter(d => d.status === 'approved').length} | 
+              Pending: {donors.filter(d => d.status === 'pending').length}
+            </span>
+          </div>
+        </div>
+      </div>
+
 
         {error && <div className="alert alert-danger">{error}</div>}
 

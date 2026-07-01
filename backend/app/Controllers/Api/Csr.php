@@ -90,29 +90,37 @@ class Csr extends BaseController
         return $this->success($stock, 'Stock fetched successfully');
     }
 
-    public function add()
-    {
-        $input = $this->request->getJSON(true);
+public function add()
+{
+    $input = $this->request->getJSON(true);
 
-        $blood_group_id = $input['blood_group_id'] ?? null;
-        $units          = (int)($input['units'] ?? 0);
-        $note           = $input['note'] ?? null;
+    $blood_group_id = $input['blood_group_id'] ?? null;
+    $donor_id       = $input['donor_id'] ?? null;
+    $donation_date  = $input['donation_date'] ?? date('Y-m-d');
 
-        if (!$blood_group_id || $units <= 0) {
-            return $this->error('blood_group_id and units (> 0) are required.');
-        }
-
-        $stockModel = new BloodStockModel();
-        $stock = $stockModel->where('blood_group_id', $blood_group_id)->first();
-
-        if (!$stock) return $this->error('Blood group not found.');
-
-        $newUnits = $stock['units_available'] + $units;
-        $stockModel->update($stock['id'], ['units_available' => $newUnits, 'updated_at' => date('Y-m-d H:i:s')]);
-        $this->logAction($blood_group_id, 'add', $units, $note);
-
-        return $this->success(['units_available' => $newUnits], "Added $units unit(s) successfully.");
+    if (!$blood_group_id || !$donor_id) {
+        return $this->error('blood_group_id and donor_id are required.');
     }
+
+    $added_by = $_SESSION['awt_user']['name'] ?? 'Unknown';
+
+    $stockModel = new BloodStockModel();
+    $stockModel->insert([
+        'blood_group_id' => $blood_group_id,
+        'donor_id'       => $donor_id,
+        'donation_date'  => $donation_date,
+        'added_by'       => $added_by,
+        'created_at'     => date('Y-m-d H:i:s'),
+    ]);
+
+    $this->logAction($blood_group_id, 'add', 1, "Donor: $donor_id, by: $added_by");
+
+    return $this->success([
+        'donor_id'      => $donor_id,
+        'donation_date' => $donation_date,
+        'added_by'      => $added_by,
+    ], "Added unit successfully (Donor: $donor_id).");
+}
 
     public function edit()
     {

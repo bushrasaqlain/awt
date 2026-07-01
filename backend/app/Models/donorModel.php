@@ -30,6 +30,9 @@ class DonorModel extends Model
         'emergency_phone',
         'status',
     ];
+      protected $validationRules = [
+        'status' => 'in_list[pending,approved,rejected]',
+    ];
 
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
